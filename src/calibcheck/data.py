@@ -273,6 +273,11 @@ def validate_frame(df: pd.DataFrame, cfg: AnalysisConfig, *, findings: list[Find
             "No probability column selected. Name them explicitly (e.g. --prob p_model_a); "
             "CalibCheck does not guess probability columns from numeric columns.",
             code="INPUT_NO_PROB_COLUMNS")
+    unused_transforms = sorted(set(cfg.transforms) - set(cols.probs))
+    if unused_transforms:
+        raise InputValidationError(
+            f"Transform keys must name selected probability columns: {unused_transforms!r}.",
+            code="INPUT_TRANSFORM_MISMATCH")
     role_cols = cols.role_columns()
     usage = Counter(c for _, c in role_cols)
     ambiguous = sorted(c for c, k in usage.items() if k > 1)

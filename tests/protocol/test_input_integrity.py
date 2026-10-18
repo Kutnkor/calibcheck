@@ -60,3 +60,10 @@ def test_directory_config_returns_actionable_domain_error(tmp_path):
     from calibcheck.errors import ConfigError
     with pytest.raises(ConfigError, match="readable TOML file"):
         load_config_file(tmp_path)
+
+
+def test_misspelled_transform_key_cannot_silently_leave_predictions_unchanged(tiny_frame, cfg_factory):
+    cfg = cfg_factory(transforms={"p_typo": "logit"})
+    with pytest.raises(InputValidationError) as exc:
+        load_predictions(tiny_frame, cfg)
+    assert exc.value.code == "INPUT_TRANSFORM_MISMATCH"
