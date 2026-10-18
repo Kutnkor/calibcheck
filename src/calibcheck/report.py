@@ -93,12 +93,19 @@ def prepare_output_dir(path: str | Path, *, overwrite: bool = False) -> OutputDi
                               "pass --overwrite to replace it.")
         try:
             old = json.loads(manifest.read_text(encoding="utf-8"))
-            listed = list(old.get("files", {}))
+            if (not isinstance(old, dict) or old.get("tool") != "calibcheck"
+                    or not isinstance(old.get("files"), dict)
+                    or any(not isinstance(k, str) or not isinstance(v, str)
+                           or re.fullmatch(r"[0-9a-f]{64}", v) is None for k, v in old["files"].items())):
+                raise OutputError("Not a valid CalibCheck export manifest; existing files were preserved.")
+            listed = list(old["files"])
         except (json.JSONDecodeError, OSError) as exc:
             raise OutputError(f"Cannot read the previous export manifest: {exc}") from exc
         out = OutputDir(root)
-        for rel in [*listed, MANIFEST_NAME, MARKER]:
-            p = out._resolve(rel)
+        # Preflight the entire manifest before deleting any file. A bad later entry must
+        # never leave an otherwise valid report partially deleted.
+        targets = [out._resolve(rel) for rel in [*listed, MANIFEST_NAME, MARKER]]
+        for p in targets:
             if p.is_file():
                 p.unlink()
         for d in sorted((p for p in root.rglob("*") if p.is_dir()), reverse=True):
