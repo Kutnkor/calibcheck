@@ -428,9 +428,12 @@ def load_artifact(path: str | Path) -> CalibratorArtifact:
     pth = Path(path)
     if not pth.exists():
         raise ArtifactError(f"Artifact not found: {pth.name}")
-    if pth.stat().st_size > MAX_ARTIFACT_BYTES:
-        raise ArtifactError("Artifact file is unreasonably large.")
-    raw = pth.read_bytes()
+    try:
+        if pth.stat().st_size > MAX_ARTIFACT_BYTES:
+            raise ArtifactError("Artifact file is unreasonably large.")
+        raw = pth.read_bytes()
+    except OSError as exc:
+        raise ArtifactError(f"Cannot read artifact {pth.name!r}; provide a readable JSON file.") from exc
     if raw[:2] in (b"\x80\x03", b"\x80\x04", b"\x80\x05"):
         raise ArtifactError("This looks like a pickle/joblib file. CalibCheck only loads its "
                             "documented JSON artifacts and never unpickles uploads.")

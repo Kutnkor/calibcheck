@@ -76,3 +76,9 @@ def test_atomic_save_preserves_existing_artifact_on_failure(tmp_path, monkeypatc
         save_artifact(artifact("identity"), path, overwrite=True)
     assert path.read_bytes() == before
     assert not list(tmp_path.glob(".calibcheck-*.tmp"))
+
+
+def test_artifact_directory_reports_domain_error(tmp_path):
+    from calibcheck.calibration import load_artifact
+    with pytest.raises(ArtifactError, match="readable JSON file"):
+        load_artifact(tmp_path)
