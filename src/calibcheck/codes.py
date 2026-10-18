@@ -9,6 +9,7 @@ from __future__ import annotations
 
 EXPLANATIONS: dict[str, str] = {
     # --- input / schema validation -------------------------------------------------------
+    "ALIGN_METADATA_CONFLICT": "Matched rows disagree on shared entity, split, timestamp or subgroup metadata.",
     "INPUT_EMPTY": "The file contains no data rows.",
     "INPUT_UNREADABLE": "The file could not be parsed as CSV.",
     "INPUT_DUPLICATE_HEADER": "Two or more columns share the same header name.",

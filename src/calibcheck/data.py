@@ -573,6 +573,18 @@ def align_by_id(a: PredictionData, b: PredictionData, *, allow_intersection: boo
         raise InputValidationError(
             f"{int(conflict.sum())} matched ID(s) have contradictory outcomes between the files.",
             code="ALIGN_LABEL_CONFLICT")
+    metadata = [("entity", a.entity, b.entity), ("split", a.split, b.split),
+                ("timestamp", a.timestamps, b.timestamps)]
+    metadata += [(name, a.groups[name], b.groups[name]) for name in sorted(a.groups.keys() & b.groups.keys())]
+    for name, left, right in metadata:
+        if left is None or right is None:
+            continue
+        lhs = pd.Series(np.asarray(left)[pa]).reset_index(drop=True)
+        rhs = pd.Series(np.asarray(right)[pb]).reset_index(drop=True)
+        if not lhs.equals(rhs):
+            raise InputValidationError(
+                f"Matched IDs have conflicting {name!r} metadata; resolve the conflict before comparison.",
+                code="ALIGN_METADATA_CONFLICT")
     sa = a.subset(np.isin(np.arange(a.n), pa))
     order = np.argsort(pa)
     # sa rows are in a's original order; reorder b to match

@@ -65,3 +65,19 @@ def test_grouped_selection_requires_multiple_entities(tiny_frame, cfg_factory):
     cal = load_predictions(tiny_frame.assign(entity="one"), cfg)
     with pytest.raises(FittingError, match="two distinct entities"):
         select_method(cal, "p", ["identity"], cfg, n_folds=2)
+
+
+@pytest.mark.parametrize("field", ["entity", "split", "ts", "group"])
+def test_alignment_checks_shared_metadata_by_id(tiny_frame, cfg_factory, field):
+    from calibcheck.data import align_by_id
+    from calibcheck.errors import InputValidationError
+    cfg = cfg_factory(columns={"entity": "entity", "split": "split", "timestamp": "ts", "groups": ["group"]})
+    frame = tiny_frame.assign(entity=["e1", "e2", "e3", "e4"], split="test", ts="2025-01-01", group="A")
+    left = load_predictions(frame, cfg)
+    other = frame.iloc[::-1].copy()
+    aligned, _ = align_by_id(left, load_predictions(other, cfg))
+    assert (aligned.probs["p"] == aligned.probs["p_b"]).all()
+    other.iloc[0, other.columns.get_loc(field)] = "2026-01-01" if field == "ts" else "changed"
+    with pytest.raises(InputValidationError) as exc:
+        align_by_id(left, load_predictions(other, cfg))
+    assert exc.value.code == "ALIGN_METADATA_CONFLICT"
