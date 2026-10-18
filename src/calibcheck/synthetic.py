@@ -224,7 +224,7 @@ def temporal(n: int = 4800, seed: int = 29) -> Scenario:
     start = np.datetime64("2025-01-01T00:00:00")
     secs = np.sort(rng.integers(0, 365 * 24 * 3600, n))
     ts = start + secs.astype("timedelta64[s]")
-    t = secs / secs.max()
+    t = secs / secs.max(axis=None)
     x = rng.standard_normal(n)
     p_true = expit(-1.0 + 1.0 * t + x)   # prevalence rises over the year
     p_model = expit(-1.0 + x)            # model trained on the early regime
