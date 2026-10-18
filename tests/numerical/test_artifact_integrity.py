@@ -30,3 +30,10 @@ def test_duplicate_isotonic_coordinates_rejected():
     art.params = {"x": [0.1, 0.1, 0.9], "y": [0.0, 0.5, 1.0]}
     with pytest.raises(ArtifactError, match="strictly increasing"):
         validate_artifact(art)
+
+
+def test_nonconverged_artifacts_cannot_be_applied():
+    art = artifact()
+    art.diagnostics.converged = False
+    with pytest.raises(ArtifactError, match="non-converged"):
+        apply_calibrator(art, np.array([0.2]))

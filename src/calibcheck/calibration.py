@@ -286,6 +286,8 @@ def fit_calibrator(p: np.ndarray, y: np.ndarray, method: str, *, eps: float = 1e
         params, diag = _fit_temperature(_logit(p, eps), y)
     else:
         params, diag = _fit_isotonic(p, y)
+    if not diag.converged:
+        raise FittingError("Optimizer did not converge; no calibrator artifact was created.")
     if method != "identity" and y.size < SMALL_CALIBRATION_N:
         diag.warnings.append(Finding(
             code="FIT_SMALL_CALIBRATION_SET", severity="warning",
@@ -356,8 +358,8 @@ def validate_artifact(art: CalibratorArtifact) -> None:
                             f"(this CalibCheck reads {ARTIFACT_SCHEMA_VERSION}).")
     if not (MIN_CLIP_EPS <= art.clip_eps < 1e-3):
         raise ArtifactError("clip_eps must be in [float64 epsilon, 1e-3).")
-    if art.diagnostics.status != "ok":
-        raise ArtifactError("The artifact records a failed fit and cannot be applied.")
+    if art.diagnostics.status != "ok" or not art.diagnostics.converged:
+        raise ArtifactError("The artifact records a failed or non-converged fit and cannot be applied.")
     p = art.params
 
     def _finite(v: Any) -> bool:
