@@ -23,3 +23,10 @@ def test_tiny_clip_epsilon_rejected_before_endpoint_math():
     art.clip_eps = 1e-100
     with pytest.raises(ArtifactError):
         apply_calibrator(art, np.array([0.0, 1.0]))
+
+
+def test_duplicate_isotonic_coordinates_rejected():
+    art = artifact("isotonic")
+    art.params = {"x": [0.1, 0.1, 0.9], "y": [0.0, 0.5, 1.0]}
+    with pytest.raises(ArtifactError, match="strictly increasing"):
+        validate_artifact(art)

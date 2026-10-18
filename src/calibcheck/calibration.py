@@ -381,9 +381,9 @@ def validate_artifact(art: CalibratorArtifact) -> None:
         if (not isinstance(x, list) or not isinstance(yv, list) or len(x) != len(yv)
                 or len(x) == 0 or not all(_finite(v) for v in x + yv)):
             raise ArtifactError("isotonic breakpoints must be equal-length, non-empty, finite.")
-        if any(b < a for a, b in itertools.pairwise(x)) or any(
+        if any(b <= a for a, b in itertools.pairwise(x)) or any(
                 b < a for a, b in itertools.pairwise(yv)):
-            raise ArtifactError("isotonic breakpoints must be non-decreasing.")
+            raise ArtifactError("isotonic x must be strictly increasing and y non-decreasing.")
         if min(x) < 0 or max(x) > 1 or min(yv) < 0 or max(yv) > 1:
             raise ArtifactError("isotonic breakpoints must lie in [0, 1].")
 
