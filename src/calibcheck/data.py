@@ -174,6 +174,9 @@ def read_csv_bytes(raw_bytes: bytes, cfg: AnalysisConfig) -> tuple[pd.DataFrame,
         raise InputValidationError(f"Could not parse the CSV header: {exc}",
                                    code="INPUT_UNREADABLE") from exc
     header = [h.strip() for h in header]
+    if not header or any(not h for h in header):
+        raise InputValidationError("CSV column headers must be nonempty; name every column.",
+                                   code="INPUT_EMPTY_HEADER")
     dupes = sorted(k for k, c in Counter(header).items() if c > 1)
     if dupes:
         raise InputValidationError(
