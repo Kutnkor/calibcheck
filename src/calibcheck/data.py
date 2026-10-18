@@ -168,7 +168,8 @@ def read_csv_bytes(raw_bytes: bytes, cfg: AnalysisConfig) -> tuple[pd.DataFrame,
     if not text.strip():
         raise InputValidationError("The file is empty.", code="INPUT_EMPTY")
     try:
-        header = next(csv.reader(io.StringIO(text)))
+        reader = csv.reader(io.StringIO(text), strict=True)
+        header = next(reader)
     except (StopIteration, csv.Error) as exc:
         raise InputValidationError(f"Could not parse the CSV header: {exc}",
                                    code="INPUT_UNREADABLE") from exc
@@ -182,6 +183,18 @@ def read_csv_bytes(raw_bytes: bytes, cfg: AnalysisConfig) -> tuple[pd.DataFrame,
         raise InputValidationError(
             f"The file has {len(header)} columns, above the limit of {cfg.max_columns}.",
             code="INPUT_TOO_MANY_COLUMNS")
+    try:
+        for row in reader:
+            if not row or (len(row) == 1 and not row[0].strip()):
+                continue
+            if len(row) != len(header):
+                raise InputValidationError(
+                    f"CSV record ending at line {reader.line_num} has {len(row)} fields; "
+                    f"the header has {len(header)}. Fix the row width before analysis.",
+                    code="INPUT_SHAPE")
+    except csv.Error as exc:
+        raise InputValidationError("Malformed CSV quoting; provide a valid CSV file.",
+                                   code="INPUT_UNREADABLE") from exc
     try:
         df = pd.read_csv(io.StringIO(text), dtype=str, keep_default_na=False, na_filter=False,
                          skipinitialspace=False)
