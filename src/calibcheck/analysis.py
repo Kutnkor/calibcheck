@@ -143,4 +143,7 @@ def compare_predictions(source: Source, config: AnalysisConfig | dict[str, Any] 
         raise InputValidationError("compare needs at least two probability columns.",
                                    code="INPUT_NO_PROB_COLUMNS")
     data = _load(source, cfg)
+    if len(data.models) < 2:
+        raise InputValidationError("compare needs at least two probability columns.",
+                                   code="INPUT_NO_PROB_COLUMNS")
     return analyze_data(data, cfg, kind="comparison")
