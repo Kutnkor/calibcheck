@@ -440,6 +440,19 @@ def load_artifact(path: str | Path) -> CalibratorArtifact:
     return parse_artifact(raw)
 
 
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate JSON object key; artifact is ambiguous.")
+        result[key] = value
+    return result
+
+
+def _invalid_json_constant(value: str) -> Any:
+    raise ValueError(f"Non-standard JSON constant: {value}")
+
+
 def parse_artifact(raw: bytes | str) -> CalibratorArtifact:
     try:
         size = len(raw.encode("utf-8")) if isinstance(raw, str) else len(raw)
@@ -448,8 +461,8 @@ def parse_artifact(raw: bytes | str) -> CalibratorArtifact:
     if size > MAX_ARTIFACT_BYTES:
         raise ArtifactError("Artifact file is unreasonably large.")
     try:
-        data = json.loads(raw)
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        data = json.loads(raw, object_pairs_hook=_unique_json_object, parse_constant=_invalid_json_constant)
+    except (ValueError, UnicodeError) as exc:
         raise ArtifactError(f"Artifact is not valid JSON: {exc}") from exc
     if not isinstance(data, dict) or data.get("artifact_type") != "calibcheck.calibrator":
         raise ArtifactError("Not a CalibCheck calibrator artifact.")

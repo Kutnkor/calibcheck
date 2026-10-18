@@ -90,3 +90,12 @@ def test_uploaded_artifact_size_limit_matches_file_limit(monkeypatch, as_bytes):
     monkeypatch.setattr("calibcheck.calibration.MAX_ARTIFACT_BYTES", 10)
     with pytest.raises(ArtifactError, match="unreasonably large"):
         parse_artifact(raw.encode() if as_bytes else raw)
+
+
+@pytest.mark.parametrize("raw", [
+    '{"method":"identity","method":"sigmoid"}',
+    '{"params":{"a":1,"a":2}}', '{"a":NaN}', '{"a":Infinity}', '{"a":-Infinity}',
+])
+def test_artifacts_reject_ambiguous_or_nonstandard_json(raw):
+    with pytest.raises(ArtifactError, match="not valid JSON"):
+        parse_artifact(raw)
