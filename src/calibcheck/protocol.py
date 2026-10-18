@@ -66,6 +66,9 @@ def check_role_separation(cal: PredictionData, test: PredictionData, *,
         if cal.timestamps is None or test.timestamps is None:
             raise ProtocolError("A temporal protocol needs parseable timestamps in both files.",
                                 code="ROLE_TEMPORAL_ORDER")
+        if cal.timestamps.isna().any() or test.timestamps.isna().any():
+            raise ProtocolError("Temporal separation requires a timestamp for every row.",
+                                code="ROLE_TEMPORAL_ORDER")
         cmax, tmin = cal.timestamps.max(), test.timestamps.min()
         if not cmax < tmin:
             raise ProtocolError(
@@ -119,6 +122,9 @@ def select_method(cal: PredictionData, model: str, methods: list[str], cfg: Anal
     under a temporal protocol. Out-of-fold predictions are pooled and scored with ``metric``.
     Ties within 1e-12 go to the simpler method.
     """
+    if temporal and (cal.timestamps is None or cal.timestamps.isna().any()):
+        raise ProtocolError("Temporal selection requires a timestamp for every calibration row.",
+                            code="ROLE_TEMPORAL_ORDER")
     n = cal.n
     idx = np.arange(n)
     if temporal and cal.timestamps is not None:
