@@ -53,3 +53,10 @@ def test_unreadable_csv_returns_domain_error(tmp_path, cfg_factory, monkeypatch)
     monkeypatch.setattr(Path, "read_bytes", deny)
     with pytest.raises(InputValidationError, match="access permissions"):
         load_predictions(path, cfg_factory())
+
+
+def test_directory_config_returns_actionable_domain_error(tmp_path):
+    from calibcheck.config import load_config_file
+    from calibcheck.errors import ConfigError
+    with pytest.raises(ConfigError, match="readable TOML file"):
+        load_config_file(tmp_path)

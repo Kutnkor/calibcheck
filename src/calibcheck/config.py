@@ -154,6 +154,8 @@ def load_config_file(path: str | Path) -> dict[str, Any]:
         raise ConfigError(f"Configuration file not found: {p.name}") from exc
     except tomllib.TOMLDecodeError as exc:
         raise ConfigError(f"Configuration file is not valid TOML: {exc}") from exc
+    except OSError as exc:
+        raise ConfigError(f"Cannot read configuration {p.name!r}; provide a readable TOML file.") from exc
     if "calibcheck" in data and isinstance(data["calibcheck"], dict) and len(data) == 1:
         data = data["calibcheck"]
     return data
