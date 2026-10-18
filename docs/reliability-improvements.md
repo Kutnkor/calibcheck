@@ -51,3 +51,10 @@ Invalid configuration, metadata conflicts and malformed files fail with actionab
 Non-converged fits produce no reusable calibrator. Temporal protocols need complete timestamps.
 Saved calibrators are validated and written atomically, and report overwrite validates every
 manifest path before deleting any previous output.
+
+## CI compatibility follow-up
+
+NumPy 2.5.4's ndarray reduction overloads behave differently when mypy targets Python 3.11
+from a Python 3.12/3.13 interpreter. Top-level `np.min`/`np.max` calls preserve the same
+numerical behavior and pass a reproduction using NumPy 2.5.4 and mypy 2.4.0 with that target.
+This compatibility repair is a separate follow-up commit to the 25 changes above.

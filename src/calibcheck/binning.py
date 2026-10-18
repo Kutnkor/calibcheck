@@ -116,7 +116,7 @@ def bin_table(y: np.ndarray, p: np.ndarray, edges: np.ndarray, *, strategy: str,
         strategy=strategy,
         n_bins_requested=n_bins_requested, n_bins_actual=k, n_nonempty=int(nonempty.sum()),
         edges=[float(e) for e in edges], edge_rule=EDGE_RULE, edge_source=edge_source,
-        bins=bins, min_support_nonempty=int(supports.min(axis=None)) if supports.size else None,
+        bins=bins, min_support_nonempty=int(np.min(supports)) if supports.size else None,
         support_threshold=min_support,
         ci_method="Wilson score (independent observations, pointwise)" if lo is not None else None,
         ci_level=wilson_level if lo is not None else None)
