@@ -143,12 +143,21 @@ def _parse_probs(raw: pd.Series) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 def _read_csv(path: Path, cfg: AnalysisConfig) -> tuple[pd.DataFrame, list[Finding], bytes]:
     if not path.exists():
         raise InputValidationError(f"Input file not found: {path.name}", code="INPUT_UNREADABLE")
-    size_mb = path.stat().st_size / 1e6
+    if not path.is_file():
+        raise InputValidationError("Input must be a readable CSV file, not a directory.", code="INPUT_UNREADABLE")
+    try:
+        size_mb = path.stat().st_size / 1e6
+    except OSError as exc:
+        raise InputValidationError("Cannot inspect the input file.", code="INPUT_UNREADABLE") from exc
     if size_mb > cfg.max_file_mb:
         raise InputValidationError(
             f"Input file is {size_mb:.1f} MB, above the configured limit of {cfg.max_file_mb} MB "
             "(raise max_file_mb explicitly to analyse it).", code="INPUT_TOO_LARGE")
-    raw_bytes = path.read_bytes()
+    try:
+        raw_bytes = path.read_bytes()
+    except OSError as exc:
+        raise InputValidationError("Cannot read the input file; check access permissions.",
+                                   code="INPUT_UNREADABLE") from exc
     df, findings = read_csv_bytes(raw_bytes, cfg)
     return df, findings, raw_bytes
 

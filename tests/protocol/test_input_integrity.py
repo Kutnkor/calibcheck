@@ -34,3 +34,22 @@ def test_blank_headers_are_not_silently_renamed(body, cfg_factory):
     with pytest.raises(InputValidationError) as exc:
         read_csv_bytes(body, cfg_factory())
     assert exc.value.code == "INPUT_EMPTY_HEADER"
+
+
+def test_directory_input_returns_actionable_domain_error(tmp_path, cfg_factory):
+    with pytest.raises(InputValidationError) as exc:
+        load_predictions(tmp_path, cfg_factory())
+    assert exc.value.code == "INPUT_UNREADABLE"
+
+
+def test_unreadable_csv_returns_domain_error(tmp_path, cfg_factory, monkeypatch):
+    from pathlib import Path
+    path = tmp_path / "input.csv"
+    path.write_text("id,y,p\na,1,.8\n")
+
+    def deny(*args):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(Path, "read_bytes", deny)
+    with pytest.raises(InputValidationError, match="access permissions"):
+        load_predictions(path, cfg_factory())
