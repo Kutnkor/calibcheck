@@ -21,7 +21,9 @@ import hashlib
 import itertools
 import json
 import math
+import os
 import secrets
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -401,9 +403,23 @@ def save_artifact(art: CalibratorArtifact, path: str | Path, *, overwrite: bool 
     out = Path(path)
     if out.exists() and not overwrite:
         raise OutputError(f"{out} already exists; pass --overwrite to replace it.")
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(art.model_dump(mode="json"), indent=2, allow_nan=False),
-                   encoding="utf-8")
+    payload = json.dumps(art.model_dump(mode="json"), indent=2, allow_nan=False)
+    temporary: Path | None = None
+    try:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=out.parent,
+                                         prefix=".calibcheck-", suffix=".tmp", delete=False) as fh:
+            temporary = Path(fh.name)
+            fh.write(payload)
+        if overwrite:
+            os.replace(temporary, out)
+        else:
+            os.link(temporary, out)  # exclusive publication: never clobber a racing writer
+    except OSError as exc:
+        raise OutputError(f"Could not save calibrator {out.name!r}: {exc.strerror or type(exc).__name__}") from exc
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
     return out
 
 

@@ -59,3 +59,20 @@ def test_save_rejects_invalid_artifact_without_touching_destination(tmp_path):
     with pytest.raises(ArtifactError):
         save_artifact(art, path, overwrite=True)
     assert path.read_text() == "keep me"
+
+
+def test_atomic_save_preserves_existing_artifact_on_failure(tmp_path, monkeypatch):
+    from calibcheck.calibration import save_artifact
+    from calibcheck.errors import OutputError
+    path = tmp_path / "map.json"
+    save_artifact(artifact(), path)
+    before = path.read_bytes()
+
+    def fail(*args):
+        raise OSError("simulated disk failure")
+
+    monkeypatch.setattr("calibcheck.calibration.os.replace", fail)
+    with pytest.raises(OutputError):
+        save_artifact(artifact("identity"), path, overwrite=True)
+    assert path.read_bytes() == before
+    assert not list(tmp_path.glob(".calibcheck-*.tmp"))
