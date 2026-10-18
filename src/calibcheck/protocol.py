@@ -77,6 +77,12 @@ def check_role_separation(cal: PredictionData, test: PredictionData, *,
 def check_artifact_overlap(art: CalibratorArtifact, test: PredictionData) -> list[Finding]:
     """Use an artifact's salted ID digests to refuse evaluating on its own calibration rows."""
     prov = art.fitted_on
+    if prov.entity_digests and prov.id_digest_salt and test.entity is not None:
+        entity_hits = digests_for(prov.id_digest_salt, test.entity) & set(prov.entity_digests)
+        if entity_hits:
+            raise ProtocolError(
+                f"{len(entity_hits)} evaluation entity ID(s) were used to fit the calibrator.",
+                code="ROLE_ENTITY_OVERLAP")
     if prov.id_digests is None or prov.id_digest_salt is None or test.id_kind != "provided":
         return [Finding(code="ROLE_PROVENANCE_UNKNOWN", severity="warning",
                         message="The artifact carries no ID digests (or the evaluation file has "
