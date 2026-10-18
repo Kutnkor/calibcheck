@@ -115,14 +115,20 @@ def prepare_output_dir(path: str | Path, *, overwrite: bool = False) -> OutputDi
     return OutputDir(root)
 
 
+def _csv_cell(value: Any) -> Any:
+    if isinstance(value, str) and (value.startswith(FORMULA_PREFIXES)
+                                   or value.lstrip().startswith(("=", "+", "-", "@"))):
+        return "'" + value
+    return value
+
+
 def csv_safe(df: pd.DataFrame) -> pd.DataFrame:
     """Neutralise spreadsheet formula injection in *text* cells (numbers are untouched)."""
     out = df.copy()
     for c in out.columns:
         if out[c].dtype == object or pd.api.types.is_string_dtype(out[c]):
-            out[c] = out[c].map(lambda v: "'" + v if isinstance(v, str) and v.startswith(FORMULA_PREFIXES) else v)
-    out.columns = ["'" + c if isinstance(c, str) and c.startswith(FORMULA_PREFIXES) else c
-                   for c in out.columns]
+            out[c] = out[c].map(_csv_cell)
+    out.columns = [_csv_cell(c) for c in out.columns]
     return out
 
 

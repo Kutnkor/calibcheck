@@ -26,3 +26,16 @@ def test_manifest_is_fully_checked_before_deleting_any_file(tmp_path):
     with pytest.raises(OutputError):
         prepare_output_dir(tmp_path, overwrite=True)
     assert note.read_text() == "preserve" and (tmp_path / MANIFEST_NAME).exists()
+
+
+@pytest.mark.parametrize("text", [" =1+1", "  +SUM(A1)", "\n@formula", "\tplain", " -1+1", "\r=cmd"])
+def test_csv_formulas_cannot_hide_behind_whitespace(text):
+    import pandas as pd
+
+    from calibcheck.report import csv_safe
+    frame = pd.DataFrame({text: [text], "numeric": [-0.25]})
+    safe = csv_safe(frame)
+    assert safe.columns[0] == "'" + text
+    assert safe.iloc[0, 0] == "'" + text
+    assert safe.numeric.iloc[0] == -0.25
+    assert frame.columns[0] == text  # caller data is unchanged
