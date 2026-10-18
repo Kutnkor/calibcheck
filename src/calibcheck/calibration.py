@@ -442,6 +442,12 @@ def load_artifact(path: str | Path) -> CalibratorArtifact:
 
 def parse_artifact(raw: bytes | str) -> CalibratorArtifact:
     try:
+        size = len(raw.encode("utf-8")) if isinstance(raw, str) else len(raw)
+    except UnicodeEncodeError as exc:
+        raise ArtifactError("Artifact contains invalid Unicode text.") from exc
+    if size > MAX_ARTIFACT_BYTES:
+        raise ArtifactError("Artifact file is unreasonably large.")
+    try:
         data = json.loads(raw)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise ArtifactError(f"Artifact is not valid JSON: {exc}") from exc

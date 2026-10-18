@@ -82,3 +82,11 @@ def test_artifact_directory_reports_domain_error(tmp_path):
     from calibcheck.calibration import load_artifact
     with pytest.raises(ArtifactError, match="readable JSON file"):
         load_artifact(tmp_path)
+
+
+@pytest.mark.parametrize("as_bytes", [True, False])
+def test_uploaded_artifact_size_limit_matches_file_limit(monkeypatch, as_bytes):
+    raw = json.dumps(artifact().model_dump(mode="json"))
+    monkeypatch.setattr("calibcheck.calibration.MAX_ARTIFACT_BYTES", 10)
+    with pytest.raises(ArtifactError, match="unreasonably large"):
+        parse_artifact(raw.encode() if as_bytes else raw)
