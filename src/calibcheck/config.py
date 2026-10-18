@@ -21,6 +21,7 @@ from calibcheck.errors import ConfigError
 Dependence = Literal["independent", "entity_clustered", "time_dependent", "unknown"]
 BinStrategy = Literal["uniform", "quantile"]
 _DEFAULT_STRATEGIES: tuple[BinStrategy, ...] = ("uniform", "quantile")
+MIN_CLIP_EPS = 2.0**-52  # float64 machine epsilon; keeps 1 - eps below 1
 
 
 class _Strict(BaseModel):
@@ -107,7 +108,7 @@ class AnalysisConfig(_Strict):
         default_factory=dict,
         description="Explicit, recorded per-column transforms: 'percent' divides by 100, "
                     "'logit' applies the logistic function. Never applied implicitly.")
-    clip_eps: float = Field(1e-15, gt=0.0, lt=1e-3)
+    clip_eps: float = Field(1e-15, ge=MIN_CLIP_EPS, lt=1e-3)
     threshold: float = Field(0.5, ge=0.0, le=1.0)
     reference_prevalence: float | None = Field(
         None, ge=0.0, le=1.0,

@@ -33,6 +33,7 @@ from scipy.special import expit
 from sklearn.isotonic import IsotonicRegression
 
 from calibcheck._version import ARTIFACT_SCHEMA_VERSION, __version__
+from calibcheck.config import MIN_CLIP_EPS
 from calibcheck.errors import ArtifactError, FittingError, InputValidationError, OutputError
 from calibcheck.schemas import Finding
 
@@ -259,8 +260,8 @@ def fit_calibrator(p: np.ndarray, y: np.ndarray, method: str, *, eps: float = 1e
     """Fit a recalibration map on *calibration* data only and return a validated artifact."""
     if method not in METHODS:
         raise FittingError(f"Unknown method {method!r}; choose from {', '.join(METHODS)}.")
-    if not (isinstance(eps, int | float) and math.isfinite(eps) and 0 < eps < 1e-3):
-        raise InputValidationError(f"eps must be a finite number in (0, 1e-3); got {eps!r}.",
+    if not (isinstance(eps, int | float) and math.isfinite(eps) and MIN_CLIP_EPS <= eps < 1e-3):
+        raise InputValidationError(f"eps must be a finite number in [float64 epsilon, 1e-3); got {eps!r}.",
                                    code="CONFIG_INVALID")
     p = _as_probabilities(p)
     y = _as_binary_labels(y, p.size)
@@ -353,8 +354,8 @@ def validate_artifact(art: CalibratorArtifact) -> None:
     if major != ARTIFACT_SCHEMA_VERSION.split(".")[0]:
         raise ArtifactError(f"Unsupported artifact schema version {art.schema_version!r} "
                             f"(this CalibCheck reads {ARTIFACT_SCHEMA_VERSION}).")
-    if not (0 < art.clip_eps < 1e-3):
-        raise ArtifactError("clip_eps must be in (0, 1e-3).")
+    if not (MIN_CLIP_EPS <= art.clip_eps < 1e-3):
+        raise ArtifactError("clip_eps must be in [float64 epsilon, 1e-3).")
     if art.diagnostics.status != "ok":
         raise ArtifactError("The artifact records a failed fit and cannot be applied.")
     p = art.params
