@@ -468,7 +468,7 @@ def apply(
         if name in df.columns and not replace_column:
             raise OutputError(f"Column {name!r} already exists; choose --column or pass "
                               "--replace-column.")
-        df[name] = [f"{v:.10g}" for v in q]
+        df[name] = [f"{v:.17g}" for v in q]
         out.parent.mkdir(parents=True, exist_ok=True)
         csv_safe(df).to_csv(out, index=False)
     except CalibCheckError as exc:

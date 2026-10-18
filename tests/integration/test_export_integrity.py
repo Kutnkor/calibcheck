@@ -39,3 +39,24 @@ def test_csv_formulas_cannot_hide_behind_whitespace(text):
     assert safe.iloc[0, 0] == "'" + text
     assert safe.numeric.iloc[0] == -0.25
     assert frame.columns[0] == text  # caller data is unchanged
+
+
+def test_apply_output_preserves_full_float64_precision(tmp_path):
+    import csv
+
+    from typer.testing import CliRunner
+
+    from calibcheck.calibration import fit_calibrator, save_artifact
+    from calibcheck.cli import app
+    from calibcheck.config import AnalysisConfig
+    from calibcheck.data import load_probabilities_only
+    src, dest, art_path = tmp_path / "in.csv", tmp_path / "out.csv", tmp_path / "map.json"
+    src.write_text("p\n0.12345678901234567\n0.9999999999999999\n")
+    _, expected = load_probabilities_only(src, "p", AnalysisConfig())
+    save_artifact(fit_calibrator([0.2, 0.8], [0, 1], "identity", model_association="p"), art_path)
+    result = CliRunner().invoke(app, ["apply", str(src), "--artifact", str(art_path),
+                                       "--prob", "p", "--out", str(dest)])
+    assert result.exit_code == 0, result.output
+    with dest.open() as fh:
+        actual = [float(row["p__identity"]) for row in csv.DictReader(fh)]
+    assert actual == expected.tolist()
