@@ -65,3 +65,11 @@ TOML will read `model.v1` as nested tables.
 
 The Streamlit app builds the same `AnalysisConfig` object. Its Export section shows the
 equivalent CLI command, and `config.toml` can be downloaded.
+
+Clipping epsilon must be at least float64 machine epsilon (`2**-52`, approximately
+`2.22e-16`) and below `1e-3`. Smaller values can round `1 - eps` to exactly one and
+produce infinite log losses. The default remains `1e-15`.
+
+Transformation keys must match selected probability columns. Unused or misspelled keys
+are rejected during input validation rather than silently ignored. CSV columns must have
+nonempty headers and each record must match the header width.

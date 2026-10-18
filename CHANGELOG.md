@@ -3,6 +3,19 @@
 All notable changes are listed here. Report-schema and artifact-schema changes are called out
 explicitly so downstream consumers can detect them.
 
+## Reliability follow-up (2026-10-18)
+
+* Preserve correctly rounded float64 probabilities on CSV input and full precision on
+  recalibrated output; reject clipping epsilon values that can produce infinite endpoint losses.
+* Validate artifacts, fit convergence, interpolation knots and provenance; write calibrators
+  atomically and reject ambiguous, oversized or unreadable artifact input.
+* Check entity leakage, complete temporal metadata, selection options and fold feasibility;
+  reject conflicting metadata during paired comparisons.
+* Reject malformed CSV records, blank headers and unused transformations; improve file errors,
+  CSV formula escaping and safe report overwrite preflight.
+* Repair NumPy typing across CI Python versions. The expanded suite has 307 passing tests.
+  See [the detailed change record](docs/reliability-improvements.md).
+
 ## Unreleased fixes (pre-0.1.0)
 
 * **Privacy:** public mode now applies the subgroup small-cell policy to time windows: fewer

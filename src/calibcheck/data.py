@@ -132,6 +132,10 @@ def _parse_probs(raw: pd.Series) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     stripped = raw.astype(str).str.strip()
     vals = np.array(pd.to_numeric(stripped.where(~missing, None), errors="coerce").to_numpy(
         dtype="float64", na_value=np.nan), copy=True)
+    # pandas.to_numeric can round a near-one decimal to exactly one. NumPy's
+    # string-to-float conversion preserves the correctly rounded float64 value.
+    finite_text = ~missing & np.isfinite(vals)
+    vals[finite_text] = np.asarray(stripped[finite_text], dtype=np.float64)
     lowered = stripped.str.lower()
     explicit_nonfinite = lowered.isin({"inf", "+inf", "-inf", "infinity", "-infinity"}).to_numpy()
     vals[explicit_nonfinite] = np.where(lowered[explicit_nonfinite].str.startswith("-"),

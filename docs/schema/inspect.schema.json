@@ -43,7 +43,7 @@
         "clip_eps": {
           "default": 1e-15,
           "exclusiveMaximum": 0.001,
-          "exclusiveMinimum": 0.0,
+          "minimum": 2.220446049250313e-16,
           "title": "Clip Eps",
           "type": "number"
         },

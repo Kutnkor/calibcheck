@@ -1,5 +1,7 @@
 # CalibCheck
 
+[![CI](https://github.com/Kutnkor/calibcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/Kutnkor/calibcheck/actions/workflows/ci.yml)
+
 **How trustworthy are your model's probabilities?**
 
 Suppose a model says "90%" for a group of cases and only about 65% of them turn out positive.
@@ -56,7 +58,7 @@ pip install -e '.[dev]'     # tests, lint, type checks
 
 Python 3.11 or newer is required. Tested locally on macOS (arm64) with Python 3.11.1, and with
 3.13.7 from a clean wheel install. The CI configuration targets 3.11–3.13 on Linux, plus macOS
-and Windows smoke jobs. **It has not been run on GitHub yet.** See
+and Windows smoke jobs. [Platform check results](https://github.com/Kutnkor/calibcheck/actions/workflows/ci.yml) are recorded on GitHub. See
 [docs/acceptance.md](docs/acceptance.md).
 
 ## Quickstart
@@ -170,7 +172,7 @@ Details: [docs/methodology.md](docs/methodology.md).
 
 ## Evidence in this repository
 
-* `tests/`: 245 tests. They cover hand-checked values, scikit-learn and SciPy cross-checks,
+* `tests/`: 307 tests. They cover hand-checked values, scikit-learn and SciPy cross-checks,
   property tests, data-role protocol tests, CLI and API agreement, offline HTML checks and the app.
 * [experiments/results/SUMMARY.md](experiments/results/SUMMARY.md): recalibration on 7 synthetic
   scenarios × 20 seeds, plus base models on synthetic tabular data, Breast Cancer Wisconsin

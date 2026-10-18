@@ -20,7 +20,7 @@ Python 3.13.7 (clean wheel install). Anything that was not run is listed under "
 | CLI and optional local app | 11 CLI subcommands are tested. `tests/interface/test_app.py` (3 tests via `streamlit.testing`). The app was launched with `calibcheck app` and exercised in a browser: Run analysis, then the Reliability tab. |
 | Installs from a built wheel | `python -m build` produced sdist and wheel. A clean Python 3.13 venv installed the wheel, and the full suite (245 tests) passed against it. |
 | Deterministic demo | `calibcheck demo --out examples/demo_output` (seed 7) gave identical numbers on repeated runs (`launch/demo_transcript.txt`). |
-| Tests, method docs, contribution materials | `tests/` (245), [methodology.md](methodology.md), CONTRIBUTING, CODE_OF_CONDUCT, `.github/` templates |
+| Tests, method docs, contribution materials | `tests/` (307), [methodology.md](methodology.md), CONTRIBUTING, CODE_OF_CONDUCT, `.github/` templates |
 
 ## Scientific checklist
 
@@ -51,12 +51,21 @@ Python 3.13.7 (clean wheel install). Anything that was not run is listed under "
 
 ## Not verified
 
-* **GitHub Actions CI** (`.github/workflows/ci.yml`) has never run on GitHub, so Linux and
-  Windows have not been exercised.
+* **GitHub Actions CI**: the initial public run passed Ubuntu/Python 3.11 and wheel
+  installation. Four other matrix jobs stopped at NumPy reduction typing; the reduction
+  calls have been corrected. See the live [CI history](https://github.com/Kutnkor/calibcheck/actions/workflows/ci.yml)
+  for subsequent platform results.
 * **Python 3.12** was not tested locally. 3.11 and 3.13 were.
 * **Cancelling a long bootstrap in the app** relies on Streamlit's own stop and rerun behaviour.
   There is no dedicated progress bar or cancel button, and this was not tested.
 * **Video recording** of the demo was not produced (`launch/record_demo.sh` and the storyboard
   are provided instead).
-* **Public release**: nothing was pushed or published. The PyPI name `calibcheck` was
-  unregistered when checked on 2026-10-18, which does not reserve it.
+* **Package publication**: source is public at [Kutnkor/calibcheck](https://github.com/Kutnkor/calibcheck).
+  No PyPI package or release tag has been published. The prior name-availability check
+  does not reserve the package name.
+
+## Reliability follow-up (2026-10-18)
+
+The updated source passes **307 tests**, Ruff and mypy in a fresh editable Python 3.11
+environment on macOS. This is separate from the original 245-test wheel validation above.
+The changes and regression evidence are listed in [reliability-improvements.md](reliability-improvements.md).

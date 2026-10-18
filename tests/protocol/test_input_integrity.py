@@ -67,3 +67,11 @@ def test_misspelled_transform_key_cannot_silently_leave_predictions_unchanged(ti
     with pytest.raises(InputValidationError) as exc:
         load_predictions(tiny_frame, cfg)
     assert exc.value.code == "INPUT_TRANSFORM_MISMATCH"
+
+
+def test_csv_probability_decimals_preserve_float64_values(cfg_factory):
+    values = ["0.12345678901234567", "0.9999999999999999", "2.2250738585072014e-308", "1e-300"]
+    raw = "id,y,p\n" + "\n".join(f"r{i},{i % 2},{p}" for i, p in enumerate(values)) + "\n"
+    data = load_predictions(raw.encode(), cfg_factory())
+    assert data.probs["p"].tolist() == [float(p) for p in values]
+    assert data.probs["p"][1] < 1.0  # must not become a spurious endpoint
