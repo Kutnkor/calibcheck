@@ -122,6 +122,12 @@ def select_method(cal: PredictionData, model: str, methods: list[str], cfg: Anal
     under a temporal protocol. Out-of-fold predictions are pooled and scored with ``metric``.
     Ties within 1e-12 go to the simpler method.
     """
+    if metric not in ("log_loss", "brier"):
+        raise FittingError("Selection metric must be log_loss or brier.")
+    if model not in cal.probs:
+        raise FittingError("Selection model is not present in the calibration data.")
+    if not methods or any(m not in METHODS for m in methods):
+        raise FittingError("Selection requires at least one supported calibration method.")
     if temporal and (cal.timestamps is None or cal.timestamps.isna().any()):
         raise ProtocolError("Temporal selection requires a timestamp for every calibration row.",
                             code="ROLE_TEMPORAL_ORDER")
@@ -175,7 +181,13 @@ def evaluate_recalibration(cal: PredictionData, test: PredictionData, cfg: Analy
                            data_note: str | None = None
                            ) -> tuple[AnalysisResult, dict[str, CalibratorArtifact]]:
     """Fit on calibration rows, evaluate raw vs recalibrated on the same untouched test rows."""
-    methods = list(methods or ["sigmoid", "isotonic"])
+    if mode not in ("exploratory", "selected"):
+        raise ProtocolError("Evaluation mode must be exploratory or selected.")
+    if selection_metric not in ("log_loss", "brier"):
+        raise ProtocolError("Selection metric must be log_loss or brier.")
+    methods = list(["sigmoid", "isotonic"] if methods is None else methods)
+    if not methods:
+        raise FittingError("At least one calibration method is required.")
     for m in methods:
         if m not in METHODS:
             raise FittingError(f"Unknown method {m!r}.")

@@ -28,3 +28,22 @@ def test_temporal_roles_and_selection_refuse_missing_timestamps(tiny_frame, cfg_
         check_role_separation(cal, test, temporal=True)
     with pytest.raises(ProtocolError, match="every calibration row"):
         select_method(cal, "p", ["identity"], cfg, temporal=True, n_folds=2)
+
+
+@pytest.mark.parametrize("options", [{"mode": "typo"}, {"selection_metric": "accuracy"}])
+def test_evaluation_options_never_silently_fall_back(tiny_frame, cfg_factory, options):
+    from calibcheck.protocol import evaluate_recalibration
+    cfg = cfg_factory()
+    cal = load_predictions(tiny_frame, cfg)
+    test = load_predictions(tiny_frame.assign(id=["t1", "t2", "t3", "t4"]), cfg)
+    with pytest.raises(ProtocolError):
+        evaluate_recalibration(cal, test, cfg, model="p", **options)
+
+
+@pytest.mark.parametrize("methods,metric", [([], "brier"), (["unknown"], "brier"), (["identity"], "typo")])
+def test_selection_rejects_invalid_methods_and_metric(tiny_frame, cfg_factory, methods, metric):
+    from calibcheck.errors import FittingError
+    from calibcheck.protocol import select_method
+    cfg = cfg_factory()
+    with pytest.raises(FittingError):
+        select_method(load_predictions(tiny_frame, cfg), "p", methods, cfg, metric=metric, n_folds=2)
