@@ -37,3 +37,14 @@ def test_nonconverged_artifacts_cannot_be_applied():
     art.diagnostics.converged = False
     with pytest.raises(ArtifactError, match="non-converged"):
         apply_calibrator(art, np.array([0.2]))
+
+
+@pytest.mark.parametrize("update", [
+    {"n": 0}, {"n_pos": -1}, {"n_pos": 99}, {"prob_range": [0.2]},
+    {"prob_range": [0.8, 0.2]}, {"prob_range": [-1, 1]}, {"prob_range": [0, float("inf")]},
+])
+def test_invalid_artifact_provenance_rejected(update):
+    data = artifact().model_dump(mode="json")
+    data["fitted_on"].update(update)
+    with pytest.raises(ArtifactError):
+        parse_artifact(json.dumps(data))

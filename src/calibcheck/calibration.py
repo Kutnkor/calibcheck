@@ -360,6 +360,12 @@ def validate_artifact(art: CalibratorArtifact) -> None:
         raise ArtifactError("clip_eps must be in [float64 epsilon, 1e-3).")
     if art.diagnostics.status != "ok" or not art.diagnostics.converged:
         raise ArtifactError("The artifact records a failed or non-converged fit and cannot be applied.")
+    prov = art.fitted_on
+    if prov.n < 1 or not 0 <= prov.n_pos <= prov.n:
+        raise ArtifactError("Calibration counts must satisfy 0 <= n_pos <= n and n >= 1.")
+    if (len(prov.prob_range) != 2 or not all(math.isfinite(v) for v in prov.prob_range)
+            or not 0 <= prov.prob_range[0] <= prov.prob_range[1] <= 1):
+        raise ArtifactError("Calibration probability range must be ordered and within [0, 1].")
     p = art.params
 
     def _finite(v: Any) -> bool:
