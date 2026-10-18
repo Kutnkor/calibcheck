@@ -1,0 +1,19 @@
+name: Feature request
+description: Propose a new capability
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Which user problem does this solve?
+    validations: {required: true}
+  - type: textarea
+    id: estimand
+    attributes:
+      label: Statistical definition
+      description: Estimand, assumptions (independence, weights, roles), and how uncertainty would be handled.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria and tests
+    validations: {required: true}

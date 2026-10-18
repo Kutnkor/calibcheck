@@ -1,0 +1,16 @@
+# Example configuration for examples/example_predictions.csv
+#   calibcheck report examples/example_predictions.csv --config examples/calibcheck.toml --out reports/example
+[columns]
+label = "y_true"
+probs = ["p_model", "p_model_b"]
+id = "row_id"
+groups = ["channel"]
+
+[binning]
+strategy = "uniform"
+n_bins = 10
+
+[uncertainty]
+bootstrap = true
+n_resamples = 2000
+seed = 7

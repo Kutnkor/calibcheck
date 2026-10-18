@@ -1,0 +1,17 @@
+name: Experiments (manual)
+
+# Expensive study runs are kept out of pull-request CI.
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -e .
+      - run: python experiments/run_experiments.py
+      - uses: actions/upload-artifact@v4
+        with: {name: experiment-results, path: experiments/results/}

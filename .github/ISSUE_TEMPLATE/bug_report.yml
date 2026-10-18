@@ -1,0 +1,32 @@
+name: Bug report
+description: Something computed or behaved incorrectly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Please do not upload private data.** Reduce the problem to a few synthetic or hand-written rows.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations: {required: true}
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal sanitised reproduction
+      description: The exact command or Python code, plus a tiny CSV (paste inline).
+      render: shell
+    validations: {required: true}
+  - type: input
+    id: version
+    attributes:
+      label: Output of `calibcheck version`, Python version and OS
+    validations: {required: true}
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: The reproduction contains no private or identifying data.
+          required: true

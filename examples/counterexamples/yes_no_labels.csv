@@ -1,0 +1,7 @@
+row_id,outcome,p_yes
+001,yes,0.9
+002,no,0.2
+003,no,0.3
+004,yes,0.6
+005,no,0.1
+006,yes,0.8

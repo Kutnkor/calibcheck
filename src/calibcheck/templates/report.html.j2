@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="CalibCheck {{ version }}">
+<title>{{ res.title }}</title>
+<style>
+:root {
+  --bg: #fcfcfb; --surface: #ffffff; --ink: #0b0b0b; --ink2: #52514e; --muted: #6f6e69;
+  --line: #e4e3df; --accent: #2a78d6; --warn-bg: #fff4e5; --warn-ink: #7a4100;
+  --info-bg: #eef4fc; --info-ink: #164a87; --code-bg: #f3f2ef;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --surface: #1d1d1c; --ink: #f0efec; --ink2: #c3c2b7; --muted: #a09f97;
+    --line: #34332f; --accent: #6aa5ee; --warn-bg: #3a2a12; --warn-ink: #ffd38a;
+    --info-bg: #142338; --info-ink: #b9d4f6; --code-bg: #262624;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 1.6rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 1.2rem; margin: 40px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+h3 { font-size: 1rem; margin: 24px 0 8px; }
+p { margin: 6px 0 10px; }
+.sub { color: var(--ink2); margin: 0 0 16px; }
+.badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--ink2); margin-right: 6px; }
+.badge.syn { background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 10px 0; }
+.finding { border-left: 4px solid var(--accent); }
+.finding.warning { border-left-color: #c97a00; }
+.finding .code { font: 600 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+.finding .caveat { color: var(--ink2); font-size: 0.9rem; margin: 4px 0 0; }
+.tbl-wrap { overflow-x: auto; margin: 8px 0 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink2); font-weight: 600; white-space: nowrap; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+tr.dim td { color: var(--muted); }
+.figure { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px; display: inline-block; max-width: 100%; }
+.figure img { max-width: 100%; height: auto; display: block; }
+.alt { color: var(--ink2); font-size: 0.88rem; }
+details { margin: 10px 0; }
+summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+pre { background: var(--code-bg); padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 0.8rem; }
+code { background: var(--code-bg); padding: 1px 4px; border-radius: 4px; font-size: 0.85em; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.stat .k { color: var(--ink2); font-size: 0.8rem; }
+.stat .v { font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.note { color: var(--ink2); font-size: 0.88rem; }
+ul.follow { margin: 6px 0; padding-left: 20px; }
+@media print { h2 { break-before: auto; } details { display: block; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>{{ res.title }}</h1>
+  <p class="sub">
+    {% if res.synthetic %}<span class="badge syn">Synthetic data</span>{% endif %}
+    <span class="badge">{{ res.kind }}</span>
+    <span class="badge">CalibCheck {{ version }} · schema {{ schema_version }}</span>
+    {% if res.config.privacy.mode == "public" %}<span class="badge">public export</span>{% endif %}
+  </p>
+  <p>Analysed <strong>{{ res.dataset.n_rows_retained | fmt }}</strong> of {{ res.dataset.n_rows_input | fmt }} rows
+  ({{ res.dataset.n_pos | fmt }} positive, {{ res.dataset.n_neg | fmt }} negative; prevalence {{ res.dataset.prevalence | fmt(3) }})
+  for {{ res.models | length }} probability column{{ "s" if res.models | length != 1 }}.
+  Each probability is <strong>{{ res.dataset.probability_meaning }}</strong>.</p>
+  {% if res.data_note %}<p class="note">{{ res.data_note }}</p>{% endif %}
+</header>
+
+<section aria-labelledby="evidence">
+  <h2 id="evidence">Evidence summary</h2>
+  <p class="note">Rule-based findings computed from the statistics below. Each names its population and caveat. None of them certifies a model as calibrated, safe or ready for use.</p>
+  {% for f in res.findings %}
+  <div class="card finding {{ f.severity }}">
+    <div class="code">{{ f.code }}{% if f.population %} · {{ f.population }}{% endif %}</div>
+    <p>{{ f.message }}</p>
+    {% if f.caveat %}<p class="caveat">{{ f.caveat }}</p>{% endif %}
+  </div>
+  {% else %}
+  <p>No findings were generated.</p>
+  {% endfor %}
+  {% if follow_ups %}
+  <h3>Suggested follow-up</h3>
+  <ul class="follow">{% for s in follow_ups %}<li>{{ s }}</li>{% endfor %}</ul>
+  {% endif %}
+</section>
+
+<section aria-labelledby="context">
+  <h2 id="context">Dataset context</h2>
+  <div class="grid">
+    <div class="stat"><div class="k">Rows retained / input</div><div class="v">{{ res.dataset.n_rows_retained | fmt }} / {{ res.dataset.n_rows_input | fmt }}</div></div>
+    <div class="stat"><div class="k">Positives / negatives</div><div class="v">{{ res.dataset.n_pos | fmt }} / {{ res.dataset.n_neg | fmt }}</div></div>
+    <div class="stat"><div class="k">Prevalence</div><div class="v">{{ res.dataset.prevalence | fmt(3) }}</div></div>
+    <div class="stat"><div class="k">Missing-data policy</div><div class="v">{{ res.dataset.missing_policy }}</div></div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <tr><th>Outcome column</th><td>{{ res.dataset.label_column }}</td></tr>
+    <tr><th>Label mapping</th><td>{% for k, v in res.dataset.label_mapping.items() %}<code>{{ k }}</code> → {{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+    <tr><th>Row IDs</th><td>{{ res.dataset.id_kind }}{% if res.dataset.id_column %} (column <code>{{ res.dataset.id_column }}</code>){% endif %}</td></tr>
+    <tr><th>Analysis population</th><td>{{ res.dataset.analysis_population }}</td></tr>
+    <tr><th>Declared dependence</th><td>{{ res.config.dependence }}</td></tr>
+    {% for e in res.dataset.exclusions %}<tr><th>Excluded</th><td>{{ e.count | fmt }} row(s): {{ e.reason }}{% if e.field %} in <code>{{ e.field }}</code>{% endif %}</td></tr>{% endfor %}
+  </table></div>
+  <h3>Probability columns</h3>
+  <div class="tbl-wrap"><table>
+    <tr><th>Model</th><th class="num">Min</th><th class="num">Max</th><th class="num">Mean</th><th class="num">Distinct</th><th class="num">Exactly 0</th><th class="num">Exactly 1</th></tr>
+    {% for name, r in res.dataset.prob_ranges.items() %}
+    <tr><td>{{ name }}</td><td class="num">{{ r.min | fmt }}</td><td class="num">{{ r.max | fmt }}</td><td class="num">{{ r.mean | fmt }}</td><td class="num">{{ r.n_unique | fmt }}</td><td class="num">{{ r.n_zero | fmt }}</td><td class="num">{{ r.n_one | fmt }}</td></tr>
+    {% endfor %}
+  </table></div>
+</section>
+
+<section aria-labelledby="scores">
+  <h2 id="scores">Key scores</h2>
+  <p class="note">Overall scores (Brier, log loss) mix calibration and discrimination. Calibration diagnostics depend on the declared bins. Ranking metrics describe ordering, not probability accuracy. Intervals describe aggregate statistics, not any individual's probability.</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>Metric</th><th>Category</th>{% for m in res.models %}<th class="num">{{ m.display_name }}</th>{% endfor %}</tr>
+    {% for key in metric_order %}
+    <tr>
+      <td title="{{ registry[key].description }}">{{ registry[key].label }}</td>
+      <td>{{ registry[key].category }}</td>
+      {% for m in res.models %}{% set mv = m.metrics[key] %}
+      <td class="num">{% if mv.status == "ok" %}{{ mv.value | fmt }}{% if mv.interval and mv.interval.status == "ok" %}<br><span class="note">[{{ mv.interval.low | fmt }}, {{ mv.interval.high | fmt }}]</span>{% elif mv.interval %}<br><span class="note">interval: {{ mv.interval.reason }}</span>{% endif %}{% else %}<span class="note">unavailable: {{ mv.reason }}</span>{% endif %}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table></div>
+  <p class="note">Log loss uses natural logarithms and clips probabilities to [ε, 1−ε] with ε = {{ res.config.clip_eps }}; {% for m in res.models %}{{ m.display_name }}: {{ m.clipping.n_clipped_low }} low / {{ m.clipping.n_clipped_high }} high values clipped{% if not loop.last %}; {% endif %}{% endfor %}. The Brier skill score uses {{ res.models[0].metrics.brier_skill.details.get("reference_kind", "a constant reference") if res.models else "" }}.
+  {% if res.config.uncertainty.bootstrap %}Brackets: {{ (res.config.uncertainty.level * 100) | round | int }}% percentile bootstrap, {{ res.config.uncertainty.n_resamples }} resamples, seed {{ res.config.uncertainty.seed }}, IID observations, conditional on the fixed predictions.{% endif %}</p>
+</section>
+
+<section aria-labelledby="reliability">
+  <h2 id="reliability">Reliability diagram</h2>
+  {% for key, fig in figs.items() if key.startswith("reliability") %}
+  <figure class="figure"><img src="data:image/png;base64,{{ fig[0] }}" alt="{{ fig[1] }}"></figure>
+  <p class="alt">{{ fig[1] }}</p>
+  {% endfor %}
+  {% for m in res.models %}
+  <details {% if loop.first %}open{% endif %}>
+    <summary>Bin table — {{ m.display_name }}</summary>
+    <p class="note">Edges: {{ m.binning.edge_source }}. Rule: {{ m.binning.edge_rule }}. Requested {{ m.binning.n_bins_requested }} bins, actual {{ m.binning.n_bins_actual }} ({{ m.binning.n_nonempty }} nonempty). Gap = mean prediction − observed rate (positive: predictions exceed the observed rate).{% if m.binning.ci_method %} Interval: {{ m.binning.ci_method }}, level {{ m.binning.ci_level }}.{% endif %}</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Range</th><th class="num">Rows</th><th class="num">Events</th><th class="num">Mean pred.</th><th class="num">Observed</th><th class="num">Gap</th><th class="num">Interval (observed rate)</th><th>Support</th></tr>
+      {% for b in m.binning.bins %}
+      <tr class="{{ 'dim' if b.count == 0 }}">
+        <td>[{{ b.lower | fmt(3) }}, {{ b.upper | fmt(3) }}{{ "]" if b.closed == "both" else ")" }}</td>
+        <td class="num">{{ b.count | fmt }}</td><td class="num">{{ b.n_pos | fmt }}</td>
+        <td class="num">{{ b.mean_pred | fmt(3) }}</td><td class="num">{{ b.observed_rate | fmt(3) }}</td>
+        <td class="num">{{ b.signed_gap | fmt(3) }}</td>
+        <td class="num">{% if b.ci_status == "ok" %}{{ b.ci_low | fmt(3) }}–{{ b.ci_high | fmt(3) }}{% else %}—{% endif %}</td>
+        <td>{% if b.count == 0 %}empty{% elif b.low_support %}below {{ m.binning.support_threshold }}{% else %}ok{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table></div>
+  </details>
+  {% endfor %}
+  {% if res.models and res.models[0].sensitivity %}
+  <h3>Binning sensitivity</h3>
+  <p class="note">A robustness check over predeclared partitions; the primary partition above stays fixed. ECE values from different partitions are not interchangeable.</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>Model</th><th>Strategy</th><th class="num">Requested</th><th class="num">Actual</th><th class="num">Min support</th><th class="num">ECE</th><th class="num">Max gap</th><th class="num">RMS gap</th><th>Primary</th></tr>
+    {% for m in res.models %}{% for s in m.sensitivity %}
+    <tr><td>{{ m.display_name }}</td><td>{{ s.strategy }}</td><td class="num">{{ s.n_bins_requested }}</td><td class="num">{{ s.n_bins_actual }}</td><td class="num">{{ s.min_support | fmt }}</td><td class="num">{{ s.ece | fmt }}</td><td class="num">{{ s.max_abs_gap | fmt }}</td><td class="num">{{ s.rms_gap | fmt }}</td><td>{{ "yes" if s.is_primary else "" }}</td></tr>
+    {% endfor %}{% endfor %}
+  </table></div>
+  {% endif %}
+</section>
+
+{% if res.comparisons %}
+<section aria-labelledby="comparisons">
+  <h2 id="comparisons">Paired comparisons</h2>
+  <p class="note">All differences use identical rows ({{ res.comparisons[0].n | fmt }}) for both models. Intervals resample the same row indices for both models. They are not built by comparing two separate intervals.</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>Metric</th><th>Candidate − reference</th><th class="num">Difference</th><th class="num">Paired interval</th><th>Favours</th></tr>
+    {% for c in res.comparisons %}
+    <tr><td title="{{ c.definition }}">{{ c.metric }}</td><td>{{ c.candidate }} − {{ c.reference }}</td>
+      <td class="num">{% if c.delta is not none %}{{ "%+.4f" | format(c.delta) }}{% else %}{{ c.reason }}{% endif %}</td>
+      <td class="num">{% if c.interval and c.interval.status == "ok" %}{{ "%+.4f" | format(c.interval.low) }} to {{ "%+.4f" | format(c.interval.high) }}{% elif c.interval %}{{ c.interval.reason }}{% else %}not requested{% endif %}</td>
+      <td>{{ c.favours }}</td></tr>
+    {% endfor %}
+  </table></div>
+  <p class="note">"neither": the interval includes zero (insufficient evidence). "undetermined": no interval was computed. No overall winner is derived from these rows.</p>
+</section>
+{% endif %}
+
+{% if res.protocol %}
+<section aria-labelledby="protocol">
+  <h2 id="protocol">Data-role protocol</h2>
+  <pre>{{ res.protocol | tojson(indent=2) }}</pre>
+</section>
+{% endif %}
+
+{% if res.groups %}
+<section aria-labelledby="groups">
+  <h2 id="groups">Subgroup diagnostics</h2>
+  {% for g in res.groups %}
+  <h3>{{ g.column }}</h3>
+  <p class="note">{{ g.interpretation }} {{ g.n_groups_examined }} group(s) examined; {{ g.n_groups_shown }} shown{% if g.other_bucket %}, the rest pooled as "(other)"{% endif %}. Ordered by size, not by error. Edges: {{ g.edge_policy }}.</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>Group</th><th class="num">Rows</th><th class="num">Prevalence</th><th class="num">Interval</th>{% for m in res.models %}<th class="num">{{ m.display_name }}: mean pred.</th><th class="num">Brier</th><th class="num">ECE</th>{% endfor %}</tr>
+    {% for r in g.rows %}
+    <tr class="{{ 'dim' if r.suppressed or r.low_support }}"><td>{{ r.name }}{% if r.suppressed %} <span class="note">(suppressed)</span>{% elif r.low_support %} <span class="note">(small)</span>{% endif %}</td>
+      <td class="num">{{ r.n | fmt }}</td><td class="num">{{ r.prevalence | fmt(3) }}</td>
+      <td class="num">{% if r.prevalence_ci_low is not none %}{{ r.prevalence_ci_low | fmt(3) }}–{{ r.prevalence_ci_high | fmt(3) }}{% else %}—{% endif %}</td>
+      {% for m in res.models %}{% set s = r.per_model.get(m.name, {}) %}<td class="num">{{ s.get("mean_pred") | fmt(3) }}</td><td class="num">{{ s.get("brier") | fmt }}</td><td class="num">{{ s.get("ece") | fmt }}</td>{% endfor %}
+    </tr>
+    {% endfor %}
+  </table></div>
+  {% for key, fig in figs.items() if key.startswith("groups_") %}
+  <figure class="figure"><img src="data:image/png;base64,{{ fig[0] }}" alt="{{ fig[1] }}"></figure>
+  {% endfor %}
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if res.time_windows %}
+<section aria-labelledby="time">
+  <h2 id="time">Time windows</h2>
+  <p class="note">{{ res.time_windows.interpretation }} {{ res.time_windows.timezone_handling }} Rows without timestamps: {{ res.time_windows.n_missing }}.{% if res.time_windows.suppression_policy %} Suppression: {{ res.time_windows.suppression_policy }}.{% endif %}</p>
+  {% if "time_windows" in figs %}<figure class="figure"><img src="data:image/png;base64,{{ figs["time_windows"][0] }}" alt="{{ figs["time_windows"][1] }}"></figure>{% endif %}
+  <div class="tbl-wrap"><table>
+    <tr><th>Window</th><th class="num">Rows</th><th class="num">Prevalence</th>{% for m in res.models %}<th class="num">{{ m.display_name }}: mean pred.</th><th class="num">Brier</th>{% endfor %}</tr>
+    {% for r in res.time_windows.rows %}
+    <tr class="{{ 'dim' if r.suppressed }}"><td>{{ r.window }}{% if r.suppressed %} <span class="note">(suppressed)</span>{% endif %}</td><td class="num">{{ r.n | fmt }}</td><td class="num">{{ r.prevalence | fmt(3) }}</td>{% for m in res.models %}<td class="num">{{ r.per_model[m.name].mean_pred | fmt(3) }}</td><td class="num">{{ r.per_model[m.name].brier | fmt }}</td>{% endfor %}</tr>
+    {% endfor %}
+  </table></div>
+</section>
+{% endif %}
+
+<section aria-labelledby="validation">
+  <h2 id="validation">Validation messages</h2>
+  {% for f in res.validation %}
+  <p><code>{{ f.code }}</code> {{ f.message }}</p>
+  {% else %}
+  <p>No validation warnings.</p>
+  {% endfor %}
+</section>
+
+<section aria-labelledby="method">
+  <h2 id="method">Methodology</h2>
+  <p>CalibCheck compares predicted probabilities with observed event frequencies. The population target is E[Y | P] = P. From finite data it estimates aspects of this relationship. It cannot reveal any individual's unknown event probability.</p>
+  <details><summary>Metric definitions</summary>
+  <div class="tbl-wrap"><table>
+    {% for key in metric_order %}<tr><th>{{ registry[key].label }}</th><td>{{ registry[key].description }} <span class="note">Scale: {{ registry[key].scale }}.</span></td></tr>{% endfor %}
+  </table></div></details>
+  <details><summary>Interpretation contract</summary>
+  <ul>
+    <li><strong>Calibration</strong> (agreement of probabilities with frequencies) is different from <strong>discrimination</strong> (ranking). A model can rank well and still assign poor probabilities.</li>
+    <li>A lower Brier or log loss does not by itself prove better calibration.</li>
+    <li>Wilson bars are approximate pointwise intervals for observed bin rates under independence. They are not simultaneous bands and not intervals for individual probabilities.</li>
+    <li>Subgroup differences are descriptive. They do not establish causes or legal fairness.</li>
+    <li>Binned ECE depends on the partition. No universal threshold certifies a model.</li>
+  </ul></details>
+  <details><summary>Resolved configuration (reproduce with <code>--config</code>)</summary><pre>{{ config_toml }}</pre></details>
+  <details><summary>Run manifest</summary><pre>{{ manifest_json }}</pre></details>
+</section>
+<footer class="note" style="margin-top:40px">Generated offline by CalibCheck {{ version }}. This file makes no network requests.</footer>
+</main>
+</body>
+</html>

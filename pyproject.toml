@@ -1,0 +1,94 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calibcheck"
+dynamic = ["version"]
+description = "How trustworthy are your model's probabilities? Local-first calibration diagnostics for binary classifiers."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "CalibCheck contributors" }]
+keywords = ["calibration", "probability", "reliability diagram", "brier score", "machine learning", "evaluation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "pandas>=2.1",
+    "scikit-learn>=1.4",
+    "typer>=0.12",
+    "rich>=13.7",
+    "matplotlib>=3.8",
+    "jinja2>=3.1",
+    "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+app = ["streamlit>=1.36"]
+dev = [
+    "pytest>=8",
+    "hypothesis>=6.100",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "pandas-stubs>=2.1",
+    "build>=1.2",
+]
+
+[project.scripts]
+calibcheck = "calibcheck.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "calibcheck._version.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+calibcheck = ["templates/*.j2", "data/*.csv", "data/*.json", "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "slow: longer-running checks (bootstrap cross-checks, app tests)",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = [
+    "S101",   # assert is fine in tests and for internal invariants
+    "S603",   # subprocess without shell=True is intentional for `calibcheck app`
+    "RUF001", "RUF002", "RUF003",  # unicode in prose strings is intentional
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/calibcheck/codes.py" = ["E501"]
+"tests/**" = ["S", "B"]
+"experiments/**" = ["S"]
+"benchmarks/**" = ["S", "B023"]  # lambdas are called immediately inside the loop
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["calibcheck"]
+mypy_path = "src"
+ignore_missing_imports = true
+warn_unused_ignores = true
+no_implicit_optional = true
+check_untyped_defs = true
+plugins = ["pydantic.mypy"]

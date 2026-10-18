@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use CalibCheck, please cite the software. The statistical methods it implements should be cited from their original publications (see docs/methodology.md)."
+title: "CalibCheck: local-first calibration diagnostics for binary probability forecasts"
+version: 0.1.0
+license: MIT
+authors:
+  - name: "CalibCheck contributors"
+type: software
+keywords:
+  - calibration
+  - probabilistic forecasting
+  - reliability diagram
+  - machine learning evaluation

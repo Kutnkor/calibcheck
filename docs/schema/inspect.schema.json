@@ -1,0 +1,778 @@
+{
+  "$defs": {
+    "AnalysisConfig": {
+      "additionalProperties": false,
+      "description": "Everything that determines a CalibCheck analysis. Exported with every run.",
+      "properties": {
+        "columns": {
+          "$ref": "#/$defs/ColumnMapping"
+        },
+        "positive_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Positive Label"
+        },
+        "missing_policy": {
+          "default": "fail",
+          "enum": [
+            "fail",
+            "drop"
+          ],
+          "title": "Missing Policy",
+          "type": "string"
+        },
+        "transforms": {
+          "additionalProperties": {
+            "enum": [
+              "percent",
+              "logit"
+            ],
+            "type": "string"
+          },
+          "description": "Explicit, recorded per-column transforms: 'percent' divides by 100, 'logit' applies the logistic function. Never applied implicitly.",
+          "title": "Transforms",
+          "type": "object"
+        },
+        "clip_eps": {
+          "default": 1e-15,
+          "exclusiveMaximum": 0.001,
+          "exclusiveMinimum": 0.0,
+          "title": "Clip Eps",
+          "type": "number"
+        },
+        "threshold": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "reference_prevalence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Prevalence from training/development data, used as a fixed reference.",
+          "title": "Reference Prevalence"
+        },
+        "binning": {
+          "$ref": "#/$defs/BinningConfig"
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/UncertaintyConfig"
+        },
+        "dependence": {
+          "default": "independent",
+          "enum": [
+            "independent",
+            "entity_clustered",
+            "time_dependent",
+            "unknown"
+          ],
+          "title": "Dependence",
+          "type": "string"
+        },
+        "groups": {
+          "$ref": "#/$defs/GroupConfig"
+        },
+        "time_window": {
+          "anyOf": [
+            {
+              "enum": [
+                "D",
+                "W",
+                "M",
+                "Q",
+                "Y"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Window"
+        },
+        "privacy": {
+          "$ref": "#/$defs/PrivacyConfig"
+        },
+        "reference_model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Model"
+        },
+        "pairwise": {
+          "default": false,
+          "title": "Pairwise",
+          "type": "boolean"
+        },
+        "primary_metric": {
+          "anyOf": [
+            {
+              "enum": [
+                "brier",
+                "log_loss"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Primary Metric"
+        },
+        "max_file_mb": {
+          "default": 500.0,
+          "exclusiveMinimum": 0,
+          "title": "Max File Mb",
+          "type": "number"
+        },
+        "max_columns": {
+          "default": 2000,
+          "minimum": 1,
+          "title": "Max Columns",
+          "type": "integer"
+        }
+      },
+      "title": "AnalysisConfig",
+      "type": "object"
+    },
+    "BinningConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "default": "uniform",
+          "enum": [
+            "uniform",
+            "quantile"
+          ],
+          "title": "Strategy",
+          "type": "string"
+        },
+        "n_bins": {
+          "default": 10,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "N Bins",
+          "type": "integer"
+        },
+        "min_support": {
+          "default": 30,
+          "description": "Practical warning threshold per bin (heuristic).",
+          "minimum": 1,
+          "title": "Min Support",
+          "type": "integer"
+        },
+        "sensitivity": {
+          "default": true,
+          "title": "Sensitivity",
+          "type": "boolean"
+        },
+        "sensitivity_bins": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Sensitivity Bins",
+          "type": "array"
+        },
+        "sensitivity_strategies": {
+          "items": {
+            "enum": [
+              "uniform",
+              "quantile"
+            ],
+            "type": "string"
+          },
+          "title": "Sensitivity Strategies",
+          "type": "array"
+        }
+      },
+      "title": "BinningConfig",
+      "type": "object"
+    },
+    "ColumnMapping": {
+      "additionalProperties": false,
+      "description": "Which CSV columns play which role. Probability columns are never guessed.",
+      "properties": {
+        "label": {
+          "default": "y_true",
+          "title": "Label",
+          "type": "string"
+        },
+        "probs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Probs",
+          "type": "array"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "entity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entity"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        },
+        "split": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Split"
+        },
+        "groups": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Groups",
+          "type": "array"
+        }
+      },
+      "title": "ColumnMapping",
+      "type": "object"
+    },
+    "DatasetOverview": {
+      "additionalProperties": false,
+      "properties": {
+        "n_rows_input": {
+          "title": "N Rows Input",
+          "type": "integer"
+        },
+        "n_rows_retained": {
+          "title": "N Rows Retained",
+          "type": "integer"
+        },
+        "n_rows_excluded": {
+          "title": "N Rows Excluded",
+          "type": "integer"
+        },
+        "exclusions": {
+          "items": {
+            "$ref": "#/$defs/Exclusion"
+          },
+          "title": "Exclusions",
+          "type": "array"
+        },
+        "missing_policy": {
+          "enum": [
+            "fail",
+            "drop"
+          ],
+          "title": "Missing Policy",
+          "type": "string"
+        },
+        "n_pos": {
+          "title": "N Pos",
+          "type": "integer"
+        },
+        "n_neg": {
+          "title": "N Neg",
+          "type": "integer"
+        },
+        "prevalence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Prevalence"
+        },
+        "label_column": {
+          "title": "Label Column",
+          "type": "string"
+        },
+        "positive_label": {
+          "title": "Positive Label",
+          "type": "string"
+        },
+        "negative_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Negative Label"
+        },
+        "label_mapping": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Label Mapping",
+          "type": "object"
+        },
+        "probability_meaning": {
+          "title": "Probability Meaning",
+          "type": "string"
+        },
+        "models": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "id_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Id Column"
+        },
+        "id_kind": {
+          "enum": [
+            "provided",
+            "positional"
+          ],
+          "title": "Id Kind",
+          "type": "string"
+        },
+        "metadata_fields": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Metadata Fields",
+          "type": "object"
+        },
+        "group_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Group Columns",
+          "type": "array"
+        },
+        "prob_ranges": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object"
+          },
+          "title": "Prob Ranges",
+          "type": "object"
+        },
+        "analysis_population": {
+          "title": "Analysis Population",
+          "type": "string"
+        }
+      },
+      "required": [
+        "n_rows_input",
+        "n_rows_retained",
+        "n_rows_excluded",
+        "missing_policy",
+        "n_pos",
+        "n_neg",
+        "prevalence",
+        "label_column",
+        "positive_label",
+        "negative_label",
+        "label_mapping",
+        "probability_meaning",
+        "models",
+        "id_column",
+        "id_kind",
+        "metadata_fields",
+        "group_columns",
+        "prob_ranges",
+        "analysis_population"
+      ],
+      "title": "DatasetOverview",
+      "type": "object"
+    },
+    "Exclusion": {
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        }
+      },
+      "required": [
+        "reason",
+        "count"
+      ],
+      "title": "Exclusion",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "description": "A structured validation warning, error, or evidence-based finding.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Count"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "population": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Population"
+        },
+        "caveat": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caveat"
+        },
+        "evidence": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Evidence",
+          "type": "object"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "GroupConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "max_groups": {
+          "default": 12,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Groups",
+          "type": "integer"
+        },
+        "min_group_size": {
+          "default": 30,
+          "minimum": 1,
+          "title": "Min Group Size",
+          "type": "integer"
+        },
+        "max_cardinality": {
+          "default": 50,
+          "maximum": 10000,
+          "minimum": 2,
+          "title": "Max Cardinality",
+          "type": "integer"
+        }
+      },
+      "title": "GroupConfig",
+      "type": "object"
+    },
+    "PrivacyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "private",
+          "enum": [
+            "private",
+            "public"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "min_cell": {
+          "default": 10,
+          "minimum": 1,
+          "title": "Min Cell",
+          "type": "integer"
+        },
+        "reveal_group_names": {
+          "default": false,
+          "title": "Reveal Group Names",
+          "type": "boolean"
+        },
+        "include_fingerprints": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Include Fingerprints"
+        },
+        "export_retained_rows": {
+          "default": false,
+          "title": "Export Retained Rows",
+          "type": "boolean"
+        }
+      },
+      "title": "PrivacyConfig",
+      "type": "object"
+    },
+    "UncertaintyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "default": 0.95,
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.5,
+          "title": "Level",
+          "type": "number"
+        },
+        "wilson": {
+          "default": true,
+          "title": "Wilson",
+          "type": "boolean"
+        },
+        "bootstrap": {
+          "default": false,
+          "title": "Bootstrap",
+          "type": "boolean"
+        },
+        "n_resamples": {
+          "default": 2000,
+          "maximum": 100000,
+          "minimum": 100,
+          "title": "N Resamples",
+          "type": "integer"
+        },
+        "seed": {
+          "default": 20251018,
+          "description": "NumPy seed; non-negative and within TOML's 64-bit range.",
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "bootstrap_bin_metrics": {
+          "default": false,
+          "description": "Exploratory ECE intervals with frozen bin edges.",
+          "title": "Bootstrap Bin Metrics",
+          "type": "boolean"
+        },
+        "max_elements_per_batch": {
+          "default": 4000000,
+          "minimum": 10000,
+          "title": "Max Elements Per Batch",
+          "type": "integer"
+        }
+      },
+      "title": "UncertaintyConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "kind": {
+      "const": "inspect",
+      "default": "inspect",
+      "title": "Kind",
+      "type": "string"
+    },
+    "validation_only": {
+      "default": true,
+      "title": "Validation Only",
+      "type": "boolean"
+    },
+    "valid": {
+      "title": "Valid",
+      "type": "boolean"
+    },
+    "dataset": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DatasetOverview"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "config": {
+      "$ref": "#/$defs/AnalysisConfig"
+    }
+  },
+  "required": [
+    "valid",
+    "dataset",
+    "findings",
+    "config"
+  ],
+  "title": "InspectResult",
+  "type": "object"
+}

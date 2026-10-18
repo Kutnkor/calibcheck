@@ -1,0 +1,2163 @@
+{
+  "$defs": {
+    "AnalysisConfig": {
+      "additionalProperties": false,
+      "description": "Everything that determines a CalibCheck analysis. Exported with every run.",
+      "properties": {
+        "columns": {
+          "$ref": "#/$defs/ColumnMapping"
+        },
+        "positive_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Positive Label"
+        },
+        "missing_policy": {
+          "default": "fail",
+          "enum": [
+            "fail",
+            "drop"
+          ],
+          "title": "Missing Policy",
+          "type": "string"
+        },
+        "transforms": {
+          "additionalProperties": {
+            "enum": [
+              "percent",
+              "logit"
+            ],
+            "type": "string"
+          },
+          "description": "Explicit, recorded per-column transforms: 'percent' divides by 100, 'logit' applies the logistic function. Never applied implicitly.",
+          "title": "Transforms",
+          "type": "object"
+        },
+        "clip_eps": {
+          "default": 1e-15,
+          "exclusiveMaximum": 0.001,
+          "exclusiveMinimum": 0.0,
+          "title": "Clip Eps",
+          "type": "number"
+        },
+        "threshold": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "reference_prevalence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Prevalence from training/development data, used as a fixed reference.",
+          "title": "Reference Prevalence"
+        },
+        "binning": {
+          "$ref": "#/$defs/BinningConfig"
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/UncertaintyConfig"
+        },
+        "dependence": {
+          "default": "independent",
+          "enum": [
+            "independent",
+            "entity_clustered",
+            "time_dependent",
+            "unknown"
+          ],
+          "title": "Dependence",
+          "type": "string"
+        },
+        "groups": {
+          "$ref": "#/$defs/GroupConfig"
+        },
+        "time_window": {
+          "anyOf": [
+            {
+              "enum": [
+                "D",
+                "W",
+                "M",
+                "Q",
+                "Y"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Window"
+        },
+        "privacy": {
+          "$ref": "#/$defs/PrivacyConfig"
+        },
+        "reference_model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Model"
+        },
+        "pairwise": {
+          "default": false,
+          "title": "Pairwise",
+          "type": "boolean"
+        },
+        "primary_metric": {
+          "anyOf": [
+            {
+              "enum": [
+                "brier",
+                "log_loss"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Primary Metric"
+        },
+        "max_file_mb": {
+          "default": 500.0,
+          "exclusiveMinimum": 0,
+          "title": "Max File Mb",
+          "type": "number"
+        },
+        "max_columns": {
+          "default": 2000,
+          "minimum": 1,
+          "title": "Max Columns",
+          "type": "integer"
+        }
+      },
+      "title": "AnalysisConfig",
+      "type": "object"
+    },
+    "BinStat": {
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "title": "Index",
+          "type": "integer"
+        },
+        "lower": {
+          "title": "Lower",
+          "type": "number"
+        },
+        "upper": {
+          "title": "Upper",
+          "type": "number"
+        },
+        "closed": {
+          "enum": [
+            "left",
+            "both"
+          ],
+          "title": "Closed",
+          "type": "string"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "n_pos": {
+          "title": "N Pos",
+          "type": "integer"
+        },
+        "mean_pred": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mean Pred"
+        },
+        "observed_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observed Rate"
+        },
+        "signed_gap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "mean_pred - observed_rate; positive means predictions exceed the observed rate",
+          "title": "Signed Gap"
+        },
+        "abs_gap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Abs Gap"
+        },
+        "ci_low": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Low"
+        },
+        "ci_high": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci High"
+        },
+        "ci_status": {
+          "default": "skipped",
+          "enum": [
+            "ok",
+            "unavailable",
+            "failed",
+            "skipped"
+          ],
+          "title": "Ci Status",
+          "type": "string"
+        },
+        "ci_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Reason"
+        },
+        "low_support": {
+          "default": false,
+          "title": "Low Support",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "index",
+        "lower",
+        "upper",
+        "closed",
+        "count",
+        "n_pos",
+        "mean_pred",
+        "observed_rate",
+        "signed_gap",
+        "abs_gap"
+      ],
+      "title": "BinStat",
+      "type": "object"
+    },
+    "BinningConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "default": "uniform",
+          "enum": [
+            "uniform",
+            "quantile"
+          ],
+          "title": "Strategy",
+          "type": "string"
+        },
+        "n_bins": {
+          "default": 10,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "N Bins",
+          "type": "integer"
+        },
+        "min_support": {
+          "default": 30,
+          "description": "Practical warning threshold per bin (heuristic).",
+          "minimum": 1,
+          "title": "Min Support",
+          "type": "integer"
+        },
+        "sensitivity": {
+          "default": true,
+          "title": "Sensitivity",
+          "type": "boolean"
+        },
+        "sensitivity_bins": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Sensitivity Bins",
+          "type": "array"
+        },
+        "sensitivity_strategies": {
+          "items": {
+            "enum": [
+              "uniform",
+              "quantile"
+            ],
+            "type": "string"
+          },
+          "title": "Sensitivity Strategies",
+          "type": "array"
+        }
+      },
+      "title": "BinningConfig",
+      "type": "object"
+    },
+    "BinningResult": {
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "enum": [
+            "uniform",
+            "quantile"
+          ],
+          "title": "Strategy",
+          "type": "string"
+        },
+        "n_bins_requested": {
+          "title": "N Bins Requested",
+          "type": "integer"
+        },
+        "n_bins_actual": {
+          "title": "N Bins Actual",
+          "type": "integer"
+        },
+        "n_nonempty": {
+          "title": "N Nonempty",
+          "type": "integer"
+        },
+        "edges": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Edges",
+          "type": "array"
+        },
+        "edge_rule": {
+          "title": "Edge Rule",
+          "type": "string"
+        },
+        "edge_source": {
+          "title": "Edge Source",
+          "type": "string"
+        },
+        "bins": {
+          "items": {
+            "$ref": "#/$defs/BinStat"
+          },
+          "title": "Bins",
+          "type": "array"
+        },
+        "min_support_nonempty": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Min Support Nonempty"
+        },
+        "support_threshold": {
+          "title": "Support Threshold",
+          "type": "integer"
+        },
+        "ci_method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Method"
+        },
+        "ci_level": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Level"
+        }
+      },
+      "required": [
+        "strategy",
+        "n_bins_requested",
+        "n_bins_actual",
+        "n_nonempty",
+        "edges",
+        "edge_rule",
+        "edge_source",
+        "bins",
+        "min_support_nonempty",
+        "support_threshold"
+      ],
+      "title": "BinningResult",
+      "type": "object"
+    },
+    "ClipInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "eps": {
+          "title": "Eps",
+          "type": "number"
+        },
+        "n_clipped_low": {
+          "title": "N Clipped Low",
+          "type": "integer"
+        },
+        "n_clipped_high": {
+          "title": "N Clipped High",
+          "type": "integer"
+        },
+        "applies_to": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Applies To",
+          "type": "array"
+        },
+        "note": {
+          "default": "Clipping is a numerical stabilisation used only inside logarithms/logits; Brier loss, bins and summaries use the original probabilities.",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eps",
+        "n_clipped_low",
+        "n_clipped_high",
+        "applies_to"
+      ],
+      "title": "ClipInfo",
+      "type": "object"
+    },
+    "ColumnMapping": {
+      "additionalProperties": false,
+      "description": "Which CSV columns play which role. Probability columns are never guessed.",
+      "properties": {
+        "label": {
+          "default": "y_true",
+          "title": "Label",
+          "type": "string"
+        },
+        "probs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Probs",
+          "type": "array"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "entity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entity"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        },
+        "split": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Split"
+        },
+        "groups": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Groups",
+          "type": "array"
+        }
+      },
+      "title": "ColumnMapping",
+      "type": "object"
+    },
+    "ComparisonResult": {
+      "additionalProperties": false,
+      "properties": {
+        "reference": {
+          "title": "Reference",
+          "type": "string"
+        },
+        "candidate": {
+          "title": "Candidate",
+          "type": "string"
+        },
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "delta": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Delta"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "unavailable",
+            "failed",
+            "skipped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "favours": {
+          "enum": [
+            "candidate",
+            "reference",
+            "neither",
+            "undetermined"
+          ],
+          "title": "Favours",
+          "type": "string"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "population": {
+          "title": "Population",
+          "type": "string"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interval"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "edge_policy": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Edge Policy"
+        }
+      },
+      "required": [
+        "reference",
+        "candidate",
+        "metric",
+        "definition",
+        "delta",
+        "status",
+        "favours",
+        "n",
+        "population"
+      ],
+      "title": "ComparisonResult",
+      "type": "object"
+    },
+    "DatasetOverview": {
+      "additionalProperties": false,
+      "properties": {
+        "n_rows_input": {
+          "title": "N Rows Input",
+          "type": "integer"
+        },
+        "n_rows_retained": {
+          "title": "N Rows Retained",
+          "type": "integer"
+        },
+        "n_rows_excluded": {
+          "title": "N Rows Excluded",
+          "type": "integer"
+        },
+        "exclusions": {
+          "items": {
+            "$ref": "#/$defs/Exclusion"
+          },
+          "title": "Exclusions",
+          "type": "array"
+        },
+        "missing_policy": {
+          "enum": [
+            "fail",
+            "drop"
+          ],
+          "title": "Missing Policy",
+          "type": "string"
+        },
+        "n_pos": {
+          "title": "N Pos",
+          "type": "integer"
+        },
+        "n_neg": {
+          "title": "N Neg",
+          "type": "integer"
+        },
+        "prevalence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Prevalence"
+        },
+        "label_column": {
+          "title": "Label Column",
+          "type": "string"
+        },
+        "positive_label": {
+          "title": "Positive Label",
+          "type": "string"
+        },
+        "negative_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Negative Label"
+        },
+        "label_mapping": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Label Mapping",
+          "type": "object"
+        },
+        "probability_meaning": {
+          "title": "Probability Meaning",
+          "type": "string"
+        },
+        "models": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "id_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Id Column"
+        },
+        "id_kind": {
+          "enum": [
+            "provided",
+            "positional"
+          ],
+          "title": "Id Kind",
+          "type": "string"
+        },
+        "metadata_fields": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Metadata Fields",
+          "type": "object"
+        },
+        "group_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Group Columns",
+          "type": "array"
+        },
+        "prob_ranges": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object"
+          },
+          "title": "Prob Ranges",
+          "type": "object"
+        },
+        "analysis_population": {
+          "title": "Analysis Population",
+          "type": "string"
+        }
+      },
+      "required": [
+        "n_rows_input",
+        "n_rows_retained",
+        "n_rows_excluded",
+        "missing_policy",
+        "n_pos",
+        "n_neg",
+        "prevalence",
+        "label_column",
+        "positive_label",
+        "negative_label",
+        "label_mapping",
+        "probability_meaning",
+        "models",
+        "id_column",
+        "id_kind",
+        "metadata_fields",
+        "group_columns",
+        "prob_ranges",
+        "analysis_population"
+      ],
+      "title": "DatasetOverview",
+      "type": "object"
+    },
+    "Exclusion": {
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        }
+      },
+      "required": [
+        "reason",
+        "count"
+      ],
+      "title": "Exclusion",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "description": "A structured validation warning, error, or evidence-based finding.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Count"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "population": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Population"
+        },
+        "caveat": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caveat"
+        },
+        "evidence": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Evidence",
+          "type": "object"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "GroupConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "max_groups": {
+          "default": 12,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Groups",
+          "type": "integer"
+        },
+        "min_group_size": {
+          "default": 30,
+          "minimum": 1,
+          "title": "Min Group Size",
+          "type": "integer"
+        },
+        "max_cardinality": {
+          "default": 50,
+          "maximum": 10000,
+          "minimum": 2,
+          "title": "Max Cardinality",
+          "type": "integer"
+        }
+      },
+      "title": "GroupConfig",
+      "type": "object"
+    },
+    "GroupResult": {
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "title": "Column",
+          "type": "string"
+        },
+        "n_groups_total": {
+          "title": "N Groups Total",
+          "type": "integer"
+        },
+        "n_groups_shown": {
+          "title": "N Groups Shown",
+          "type": "integer"
+        },
+        "n_groups_examined": {
+          "title": "N Groups Examined",
+          "type": "integer"
+        },
+        "other_bucket": {
+          "title": "Other Bucket",
+          "type": "boolean"
+        },
+        "missing_category_present": {
+          "title": "Missing Category Present",
+          "type": "boolean"
+        },
+        "edges": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Edges",
+          "type": "array"
+        },
+        "edge_policy": {
+          "title": "Edge Policy",
+          "type": "string"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/GroupRow"
+          },
+          "title": "Rows",
+          "type": "array"
+        },
+        "interpretation": {
+          "default": "Descriptive subgroup performance differences on this data. They do not establish causality, discrimination, or legal fairness.",
+          "title": "Interpretation",
+          "type": "string"
+        },
+        "exploratory": {
+          "default": true,
+          "title": "Exploratory",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "column",
+        "n_groups_total",
+        "n_groups_shown",
+        "n_groups_examined",
+        "other_bucket",
+        "missing_category_present",
+        "edges",
+        "edge_policy",
+        "rows"
+      ],
+      "title": "GroupResult",
+      "type": "object"
+    },
+    "GroupRow": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "n": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "N"
+        },
+        "n_pos": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "N Pos"
+        },
+        "prevalence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Prevalence"
+        },
+        "suppressed": {
+          "default": false,
+          "title": "Suppressed",
+          "type": "boolean"
+        },
+        "suppression_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suppression Reason"
+        },
+        "low_support": {
+          "default": false,
+          "title": "Low Support",
+          "type": "boolean"
+        },
+        "per_model": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object"
+          },
+          "title": "Per Model",
+          "type": "object"
+        },
+        "prevalence_ci_low": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prevalence Ci Low"
+        },
+        "prevalence_ci_high": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prevalence Ci High"
+        },
+        "bins": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/BinStat"
+            },
+            "type": "array"
+          },
+          "description": "Per-model bin tables on the shared edges.",
+          "title": "Bins",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "n",
+        "n_pos",
+        "prevalence"
+      ],
+      "title": "GroupRow",
+      "type": "object"
+    },
+    "InputRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Path"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        },
+        "n_rows": {
+          "title": "N Rows",
+          "type": "integer"
+        },
+        "n_columns": {
+          "title": "N Columns",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "role",
+        "n_rows",
+        "n_columns"
+      ],
+      "title": "InputRecord",
+      "type": "object"
+    },
+    "Interval": {
+      "additionalProperties": false,
+      "description": "An uncertainty interval for an aggregate statistic (never for an individual's probability).",
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "unavailable",
+            "failed",
+            "skipped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "method": {
+          "title": "Method",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "number"
+        },
+        "low": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Low"
+        },
+        "high": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "High"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "n_resamples": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "N Resamples"
+        },
+        "n_effective": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "N Effective"
+        },
+        "n_failed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "N Failed"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seed"
+        },
+        "interpretation": {
+          "default": "",
+          "title": "Interpretation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "method",
+        "level"
+      ],
+      "title": "Interval",
+      "type": "object"
+    },
+    "MetricValue": {
+      "additionalProperties": false,
+      "description": "One statistic with its scale, availability and population.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "overall",
+            "calibration",
+            "discrimination",
+            "threshold",
+            "descriptive",
+            "reference",
+            "skill"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "unavailable",
+            "failed",
+            "skipped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "scale": {
+          "title": "Scale",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "lower_is_better",
+            "higher_is_better",
+            "descriptive"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "population": {
+          "title": "Population",
+          "type": "string"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interval"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "category",
+        "value",
+        "status",
+        "scale",
+        "direction",
+        "n",
+        "population"
+      ],
+      "title": "MetricValue",
+      "type": "object"
+    },
+    "ModelResult": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "display_name": {
+          "title": "Display Name",
+          "type": "string"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "population": {
+          "title": "Population",
+          "type": "string"
+        },
+        "metrics": {
+          "additionalProperties": {
+            "$ref": "#/$defs/MetricValue"
+          },
+          "title": "Metrics",
+          "type": "object"
+        },
+        "binning": {
+          "$ref": "#/$defs/BinningResult"
+        },
+        "sensitivity": {
+          "items": {
+            "$ref": "#/$defs/SensitivityRow"
+          },
+          "title": "Sensitivity",
+          "type": "array"
+        },
+        "clipping": {
+          "$ref": "#/$defs/ClipInfo"
+        },
+        "summary": {
+          "$ref": "#/$defs/ProbabilitySummary"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "title": "Findings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "display_name",
+        "n",
+        "population",
+        "metrics",
+        "binning",
+        "clipping",
+        "summary"
+      ],
+      "title": "ModelResult",
+      "type": "object"
+    },
+    "PrivacyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "private",
+          "enum": [
+            "private",
+            "public"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "min_cell": {
+          "default": 10,
+          "minimum": 1,
+          "title": "Min Cell",
+          "type": "integer"
+        },
+        "reveal_group_names": {
+          "default": false,
+          "title": "Reveal Group Names",
+          "type": "boolean"
+        },
+        "include_fingerprints": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Include Fingerprints"
+        },
+        "export_retained_rows": {
+          "default": false,
+          "title": "Export Retained Rows",
+          "type": "boolean"
+        }
+      },
+      "title": "PrivacyConfig",
+      "type": "object"
+    },
+    "ProbabilitySummary": {
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "mean": {
+          "title": "Mean",
+          "type": "number"
+        },
+        "n_unique": {
+          "title": "N Unique",
+          "type": "integer"
+        },
+        "n_zero": {
+          "title": "N Zero",
+          "type": "integer"
+        },
+        "n_one": {
+          "title": "N One",
+          "type": "integer"
+        },
+        "histogram_edges": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Histogram Edges",
+          "type": "array"
+        },
+        "histogram_counts": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Histogram Counts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "min",
+        "max",
+        "mean",
+        "n_unique",
+        "n_zero",
+        "n_one",
+        "histogram_edges",
+        "histogram_counts"
+      ],
+      "title": "ProbabilitySummary",
+      "type": "object"
+    },
+    "RunManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "calibcheck_version": {
+          "title": "Calibcheck Version",
+          "type": "string"
+        },
+        "python_version": {
+          "title": "Python Version",
+          "type": "string"
+        },
+        "platform": {
+          "title": "Platform",
+          "type": "string"
+        },
+        "dependencies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "object"
+        },
+        "analysis_mode": {
+          "title": "Analysis Mode",
+          "type": "string"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Seed"
+        },
+        "privacy_mode": {
+          "enum": [
+            "private",
+            "public"
+          ],
+          "title": "Privacy Mode",
+          "type": "string"
+        },
+        "inputs": {
+          "items": {
+            "$ref": "#/$defs/InputRecord"
+          },
+          "title": "Inputs",
+          "type": "array"
+        },
+        "filtering": {
+          "items": {
+            "$ref": "#/$defs/Exclusion"
+          },
+          "title": "Filtering",
+          "type": "array"
+        },
+        "protocol": {
+          "additionalProperties": true,
+          "title": "Protocol",
+          "type": "object"
+        },
+        "results_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Results Digest"
+        },
+        "volatile": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Timestamps etc. Excluded from results_digest.",
+          "title": "Volatile",
+          "type": "object"
+        }
+      },
+      "required": [
+        "calibcheck_version",
+        "python_version",
+        "platform",
+        "dependencies",
+        "analysis_mode",
+        "seed",
+        "privacy_mode",
+        "inputs",
+        "filtering"
+      ],
+      "title": "RunManifest",
+      "type": "object"
+    },
+    "SensitivityRow": {
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "enum": [
+            "uniform",
+            "quantile"
+          ],
+          "title": "Strategy",
+          "type": "string"
+        },
+        "n_bins_requested": {
+          "title": "N Bins Requested",
+          "type": "integer"
+        },
+        "n_bins_actual": {
+          "title": "N Bins Actual",
+          "type": "integer"
+        },
+        "n_nonempty": {
+          "title": "N Nonempty",
+          "type": "integer"
+        },
+        "min_support": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Min Support"
+        },
+        "ece": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ece"
+        },
+        "max_abs_gap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Max Abs Gap"
+        },
+        "rms_gap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rms Gap"
+        },
+        "is_primary": {
+          "title": "Is Primary",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "strategy",
+        "n_bins_requested",
+        "n_bins_actual",
+        "n_nonempty",
+        "min_support",
+        "ece",
+        "max_abs_gap",
+        "rms_gap",
+        "is_primary"
+      ],
+      "title": "SensitivityRow",
+      "type": "object"
+    },
+    "TimeWindowResult": {
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "title": "Column",
+          "type": "string"
+        },
+        "frequency": {
+          "title": "Frequency",
+          "type": "string"
+        },
+        "timezone_handling": {
+          "title": "Timezone Handling",
+          "type": "string"
+        },
+        "n_missing": {
+          "title": "N Missing",
+          "type": "integer"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/TimeWindowRow"
+          },
+          "title": "Rows",
+          "type": "array"
+        },
+        "suppression_policy": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suppression Policy"
+        },
+        "interpretation": {
+          "default": "Prevalence, prediction distribution and calibration can each change over time; a single plot does not identify causal drift. Intervals for dependent windows are disabled.",
+          "title": "Interpretation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "column",
+        "frequency",
+        "timezone_handling",
+        "n_missing",
+        "rows"
+      ],
+      "title": "TimeWindowResult",
+      "type": "object"
+    },
+    "TimeWindowRow": {
+      "additionalProperties": false,
+      "properties": {
+        "window": {
+          "title": "Window",
+          "type": "string"
+        },
+        "n": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "N"
+        },
+        "n_pos": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "N Pos"
+        },
+        "prevalence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Prevalence"
+        },
+        "per_model": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object"
+          },
+          "title": "Per Model",
+          "type": "object"
+        },
+        "suppressed": {
+          "default": false,
+          "title": "Suppressed",
+          "type": "boolean"
+        },
+        "suppression_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suppression Reason"
+        }
+      },
+      "required": [
+        "window",
+        "n",
+        "n_pos",
+        "prevalence",
+        "per_model"
+      ],
+      "title": "TimeWindowRow",
+      "type": "object"
+    },
+    "UncertaintyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "default": 0.95,
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.5,
+          "title": "Level",
+          "type": "number"
+        },
+        "wilson": {
+          "default": true,
+          "title": "Wilson",
+          "type": "boolean"
+        },
+        "bootstrap": {
+          "default": false,
+          "title": "Bootstrap",
+          "type": "boolean"
+        },
+        "n_resamples": {
+          "default": 2000,
+          "maximum": 100000,
+          "minimum": 100,
+          "title": "N Resamples",
+          "type": "integer"
+        },
+        "seed": {
+          "default": 20251018,
+          "description": "NumPy seed; non-negative and within TOML's 64-bit range.",
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "bootstrap_bin_metrics": {
+          "default": false,
+          "description": "Exploratory ECE intervals with frozen bin edges.",
+          "title": "Bootstrap Bin Metrics",
+          "type": "boolean"
+        },
+        "max_elements_per_batch": {
+          "default": 4000000,
+          "minimum": 10000,
+          "title": "Max Elements Per Batch",
+          "type": "integer"
+        }
+      },
+      "title": "UncertaintyConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The full structured output of one analysis run.",
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "single",
+        "comparison",
+        "recalibration",
+        "inspect"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "title": {
+      "default": "CalibCheck report",
+      "title": "Title",
+      "type": "string"
+    },
+    "synthetic": {
+      "default": false,
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "data_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Data Note"
+    },
+    "config": {
+      "$ref": "#/$defs/AnalysisConfig"
+    },
+    "dataset": {
+      "$ref": "#/$defs/DatasetOverview"
+    },
+    "validation": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Validation",
+      "type": "array"
+    },
+    "models": {
+      "items": {
+        "$ref": "#/$defs/ModelResult"
+      },
+      "title": "Models",
+      "type": "array"
+    },
+    "comparisons": {
+      "items": {
+        "$ref": "#/$defs/ComparisonResult"
+      },
+      "title": "Comparisons",
+      "type": "array"
+    },
+    "groups": {
+      "items": {
+        "$ref": "#/$defs/GroupResult"
+      },
+      "title": "Groups",
+      "type": "array"
+    },
+    "time_windows": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TimeWindowResult"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "protocol": {
+      "additionalProperties": true,
+      "title": "Protocol",
+      "type": "object"
+    },
+    "manifest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RunManifest"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "kind",
+    "config",
+    "dataset"
+  ],
+  "title": "AnalysisResult",
+  "type": "object"
+}
