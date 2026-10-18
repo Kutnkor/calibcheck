@@ -48,3 +48,14 @@ def test_invalid_artifact_provenance_rejected(update):
     data["fitted_on"].update(update)
     with pytest.raises(ArtifactError):
         parse_artifact(json.dumps(data))
+
+
+def test_save_rejects_invalid_artifact_without_touching_destination(tmp_path):
+    from calibcheck.calibration import save_artifact
+    path = tmp_path / "map.json"
+    path.write_text("keep me")
+    art = artifact()
+    art.params["a"] = -1.0
+    with pytest.raises(ArtifactError):
+        save_artifact(art, path, overwrite=True)
+    assert path.read_text() == "keep me"

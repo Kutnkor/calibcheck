@@ -397,6 +397,7 @@ def validate_artifact(art: CalibratorArtifact) -> None:
 
 
 def save_artifact(art: CalibratorArtifact, path: str | Path, *, overwrite: bool = False) -> Path:
+    validate_artifact(art)
     out = Path(path)
     if out.exists() and not overwrite:
         raise OutputError(f"{out} already exists; pass --overwrite to replace it.")
