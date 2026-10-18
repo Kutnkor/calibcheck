@@ -47,3 +47,21 @@ def test_selection_rejects_invalid_methods_and_metric(tiny_frame, cfg_factory, m
     cfg = cfg_factory()
     with pytest.raises(FittingError):
         select_method(load_predictions(tiny_frame, cfg), "p", methods, cfg, metric=metric, n_folds=2)
+
+
+@pytest.mark.parametrize("folds", [0, 1, True, 2.5, 100])
+def test_selection_fold_errors_are_actionable(tiny_frame, cfg_factory, folds):
+    from calibcheck.errors import FittingError
+    from calibcheck.protocol import select_method
+    cfg = cfg_factory()
+    with pytest.raises(FittingError):
+        select_method(load_predictions(tiny_frame, cfg), "p", ["identity"], cfg, n_folds=folds)
+
+
+def test_grouped_selection_requires_multiple_entities(tiny_frame, cfg_factory):
+    from calibcheck.errors import FittingError
+    from calibcheck.protocol import select_method
+    cfg = cfg_factory(columns={"entity": "entity"})
+    cal = load_predictions(tiny_frame.assign(entity="one"), cfg)
+    with pytest.raises(FittingError, match="two distinct entities"):
+        select_method(cal, "p", ["identity"], cfg, n_folds=2)

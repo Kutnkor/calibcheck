@@ -132,6 +132,12 @@ def select_method(cal: PredictionData, model: str, methods: list[str], cfg: Anal
         raise ProtocolError("Temporal selection requires a timestamp for every calibration row.",
                             code="ROLE_TEMPORAL_ORDER")
     n = cal.n
+    if isinstance(n_folds, bool) or not isinstance(n_folds, int) or n_folds < 2:
+        raise FittingError("n_folds must be an integer of at least 2.")
+    if n_folds > n or (temporal and n_folds >= n):
+        raise FittingError("Not enough calibration rows for the requested number of folds.")
+    if cal.entity is not None and len(np.unique(cal.entity)) < 2:
+        raise FittingError("Grouped selection requires at least two distinct entities.")
     idx = np.arange(n)
     if temporal and cal.timestamps is not None:
         order = np.argsort(cal.timestamps.to_numpy(), kind="stable")
