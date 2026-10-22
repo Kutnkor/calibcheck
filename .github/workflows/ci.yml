@@ -55,7 +55,7 @@ jobs:
           /tmp/clean/bin/calibcheck report ex.csv --prob p_model --id row_id --group channel --out rep --quiet
           test -f rep/report.html
           grep -q '"complete": true' rep/export_manifest.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
